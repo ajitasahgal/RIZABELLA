@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rizabella ERP — Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#16233E; --ink-soft:#33415E; --paper:#F6F7F9; --card:#FFFFFF; --line:#E3E7EE;
+  --accent:#C9563C; --gold:#D99A2B; --teal:#1E7F74; --muted:#7A869C; --danger:#C0392B;
+  --radius:10px; font-size:15px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--paper);color:var(--ink)}
+h1,h2,h3,.brand{font-family:'Archivo',system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer}
+input,select{font-family:inherit;font-size:0.95rem}
+
+/* ---------- LOGIN ---------- */
+#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--ink);position:relative;overflow:hidden}
+#loginScreen::before{content:"";position:absolute;inset:0;
+  background:repeating-linear-gradient(90deg,transparent 0 38px,rgba(255,255,255,.04) 38px 40px),
+             repeating-linear-gradient(0deg,transparent 0 38px,rgba(255,255,255,.04) 38px 40px);}
+.login-card{position:relative;width:380px;max-width:92vw;background:var(--card);border-radius:14px;padding:34px 32px 28px;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.login-card .thread{height:6px;border-radius:6px 6px 0 0;position:absolute;top:0;left:0;right:0;
+  background:linear-gradient(90deg,var(--accent) 0 33%,var(--gold) 33% 66%,var(--teal) 66% 100%)}
+.brand{font-size:1.6rem;font-weight:800;letter-spacing:.5px}
+.brand span{color:var(--accent)}
+.login-sub{color:var(--muted);font-size:.85rem;margin:4px 0 24px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:.78rem;font-weight:600;color:var(--ink-soft);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em}
+.field input{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:8px;outline:none;transition:border-color .15s}
+.field input:focus{border-color:var(--ink)}
+.btn-primary{width:100%;padding:12px;background:var(--ink);color:#fff;border:none;border-radius:8px;font-weight:600;font-size:.95rem;transition:background .15s}
+.btn-primary:hover{background:#0f1a30}
+.login-error{display:none;background:#FBEAE7;color:var(--danger);font-size:.82rem;padding:9px 12px;border-radius:8px;margin-bottom:14px}
+.demo-creds{margin-top:20px;border-top:1px dashed var(--line);padding-top:14px;font-size:.78rem;color:var(--muted)}
+.demo-creds code{background:var(--paper);padding:2px 7px;border-radius:5px;color:var(--ink);font-weight:600}
+
+/* ---------- APP SHELL ---------- */
+#app{display:none;min-height:100vh}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--ink);color:#C7CFDE;display:flex;flex-direction:column;flex-shrink:0}
+.sidebar .brand{color:#fff;font-size:1.15rem;padding:20px 20px 6px}
+.sidebar .role-tag{font-size:.7rem;padding:0 20px 18px;color:#8A97B0;text-transform:uppercase;letter-spacing:.08em}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 20px;font-size:.88rem;color:#C7CFDE;background:none;border:none;width:100%;text-align:left;border-left:3px solid transparent}
+.nav-item:hover{background:rgba(255,255,255,.06)}
+.nav-item.active{background:rgba(255,255,255,.09);color:#fff;border-left-color:var(--accent)}
+.nav-item .ico{width:20px;text-align:center}
+.sidebar .spacer{flex:1}
+.logout-row{padding:16px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:.82rem;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.logout-row button{background:none;border:1px solid rgba(255,255,255,.25);color:#fff;padding:6px 12px;border-radius:6px;font-size:.78rem}
+.logout-row button:hover{border-color:#fff}
+.main{flex:1;padding:26px 30px;min-width:0}
+.page-title{font-size:1.35rem;font-weight:700;margin-bottom:4px}
+.page-sub{color:var(--muted);font-size:.85rem;margin-bottom:22px}
+.src-badge{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;font-weight:600;padding:4px 12px;border-radius:20px;margin-left:8px;vertical-align:middle}
+.src-badge.live{background:#E7F2F0;color:var(--teal)}
+.src-badge.demo{background:#FBF1DE;color:#9A6B12}
+.src-badge.loading{background:#EDEAF7;color:#5B4A9E}
+
+/* cards & tables */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.stat .k{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.stat .v{font-family:'Archivo';font-size:1.7rem;font-weight:700;margin-top:6px}
+.stat.warn .v{color:var(--accent)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px}
+.card h3{font-size:1rem;margin-bottom:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th{text-align:left;padding:9px 10px;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;border-bottom:1.5px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#FAFBFC}
+.chip{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:600}
+.chip.sri{background:#E7F2F0;color:var(--teal)}
+.chip.rac{background:#FBF1DE;color:#9A6B12}
+.chip.box{background:#EDEAF7;color:#5B4A9E}
+.chip.in{background:#E7F2F0;color:var(--teal)}
+.chip.out{background:#FBEAE7;color:var(--accent)}
+.chip.low{background:#FBEAE7;color:var(--danger)}
+.chip.ok{background:#E7F2F0;color:var(--teal)}
+.chip.pending{background:#FBF1DE;color:#9A6B12}
+.chip.dispatched{background:#E7F2F0;color:var(--teal)}
+.chip.sample-out{background:#EDEAF7;color:#5B4A9E}
+.toolbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.toolbar input,.toolbar select{padding:9px 12px;border:1.5px solid var(--line);border-radius:8px;background:#fff;outline:none}
+.toolbar input:focus{border-color:var(--ink)}
+.btn-accent{background:var(--accent);color:#fff;border:none;padding:9px 16px;border-radius:8px;font-weight:600;font-size:.85rem}
+.btn-accent:hover{background:#B04833}
+.btn-ghost{background:#fff;border:1.5px solid var(--line);padding:8px 14px;border-radius:8px;font-size:.82rem;color:var(--ink-soft)}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:14px}
+.form-grid label{display:block;font-size:.72rem;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
+.form-grid input,.form-grid select{width:100%;padding:9px 11px;border:1.5px solid var(--line);border-radius:8px;outline:none}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:12px 18px;border-radius:8px;font-size:.85rem;box-shadow:0 10px 30px rgba(0,0,0,.25);opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none;z-index:99}
+.toast.show{opacity:1;transform:translateY(0)}
+.locked,.notice{color:var(--ink-soft);font-size:.85rem;background:#FBF1DE;border:1px solid #EED9AC;padding:12px 14px;border-radius:8px;margin-bottom:16px}
+.qty-low{color:var(--danger);font-weight:700}
+.bar-row{display:grid;grid-template-columns:130px 1fr 70px;align-items:center;gap:10px;padding:5px 0;font-size:.84rem}
+.bar-track{background:var(--paper);border-radius:6px;height:18px;overflow:hidden}
+.bar-fill{height:100%;background:linear-gradient(90deg,var(--ink),var(--ink-soft));border-radius:6px;min-width:2px}
+.bar-fill.accent{background:linear-gradient(90deg,var(--accent),#DE7A64)}
+.bar-fill.teal{background:linear-gradient(90deg,var(--teal),#3AA294)}
+.bar-fill.gold{background:linear-gradient(90deg,var(--gold),#E7B85C)}
+.bar-num{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:900px){.two-col{grid-template-columns:1fr}}
+.scrolly{max-height:420px;overflow:auto}
+@media(max-width:760px){
+  .shell{flex-direction:column}
+  .sidebar{width:100%;flex-direction:row;flex-wrap:wrap;align-items:center}
+  .sidebar .brand{padding:14px 16px 14px}
+  .sidebar .role-tag{display:none}
+  .nav-item{width:auto;padding:10px 12px;border-left:none;border-bottom:3px solid transparent}
+  .nav-item.active{border-left:none;border-bottom-color:var(--accent)}
+  .nav-item .ico{display:none}
+  .sidebar .spacer{display:none}
+  .logout-row{margin-left:auto;border-top:none;padding:10px 14px}
+  .main{padding:18px 14px}
+  .bar-row{grid-template-columns:95px 1fr 55px}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="thread"></div>
+    <div class="brand">RIZA<span>BELLA</span></div>
+    <div class="login-sub">Garment Inventory ERP · Sign in to continue</div>
+    <div class="login-error" id="loginError">Invalid User ID or Password. Try again.</div>
+    <div class="field">
+      <label for="uid">User ID</label>
+      <input id="uid" autocomplete="username" placeholder="e.g. ajita">
+    </div>
+    <div class="field">
+      <label for="pwd">Password</label>
+      <input id="pwd" type="password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn-primary" onclick="doLogin()">Sign in</button>
+    <div class="demo-creds">
+      Login — Ajita: <code>ajita</code> / <code>ajita123</code> &nbsp;·&nbsp; Hiren: <code>hiren</code> / <code>hiren123</code>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app">
+<div class="shell">
+  <nav class="sidebar">
+    <div class="brand">RIZA<span style="color:var(--accent)">BELLA</span></div>
+    <div class="role-tag" id="roleTag">ERP · Admin</div>
+    <button class="nav-item active" data-page="dashboard" onclick="go('dashboard',this)"><span class="ico">▦</span> Dashboard</button>
+    <button class="nav-item" data-page="inventory" onclick="go('inventory',this)"><span class="ico">▤</span> Inventory</button>
+    <button class="nav-item" data-page="analytics" onclick="go('analytics',this)"><span class="ico">◫</span> Analytics</button>
+    <button class="nav-item" data-page="inout" onclick="go('inout',this)"><span class="ico">⇅</span> Stock IN / OUT</button>
+    <button class="nav-item" data-page="orders" onclick="go('orders',this)"><span class="ico">✎</span> Orders</button>
+    <button class="nav-item" data-page="samples" onclick="go('samples',this)"><span class="ico">◧</span> Sample Register</button>
+    <button class="nav-item" id="usersNav" data-page="users" onclick="go('users',this)"><span class="ico">⚙</span> Users &amp; Roles</button>
+    <div class="spacer"></div>
+    <div class="logout-row">
+      <span id="whoami">—</span>
+      <button onclick="doLogout()">Logout</button>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <section id="page-dashboard">
+      <div class="page-title">Dashboard <span class="src-badge loading" id="srcBadge">Loading sheet…</span></div>
+      <div class="page-sub" id="dashDate"></div>
+      <div class="stat-grid">
+        <div class="stat"><div class="k">Unique SKUs</div><div class="v" id="stTotalSku">–</div></div>
+        <div class="stat"><div class="k">Total Pieces</div><div class="v" id="stTotalPcs">–</div></div>
+        <div class="stat"><div class="k">Designs</div><div class="v" id="stDesigns">–</div></div>
+        <div class="stat"><div class="k">Racks in Use</div><div class="v" id="stRacks">–</div></div>
+        <div class="stat warn"><div class="k">Low Stock SKUs</div><div class="v" id="stLow">–</div></div>
+        <div class="stat"><div class="k">Samples Out</div><div class="v" id="stSamples">–</div></div>
+      </div>
+      <div class="card">
+        <h3>Low Stock Alerts
+          <select id="lowThresh" onchange="renderAll()" style="padding:4px 8px;border:1.5px solid var(--line);border-radius:6px;font-size:.78rem">
+            <option value="5">Below 5 pcs</option>
+            <option value="10" selected>Below 10 pcs</option>
+            <option value="15">Below 15 pcs</option>
+            <option value="20">Below 20 pcs</option>
+          </select>
+          <span style="font-size:.75rem;color:var(--muted);font-weight:400">(SKU total across all racks)</span>
+        </h3>
+        <div class="scrolly">
+        <table><thead><tr><th>SKU</th><th>Design</th><th>Colour</th><th>Size</th><th>Racks</th><th>Total Qty</th></tr></thead>
+        <tbody id="lowStockBody"></tbody></table>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Recent Transactions</h3>
+        <table><thead><tr><th>Date</th><th>Type</th><th>SKU</th><th>Qty</th><th>By</th><th>Remark</th></tr></thead>
+        <tbody id="recentTxBody"></tbody></table>
+      </div>
+    </section>
+
+    <!-- INVENTORY -->
+    <section id="page-inventory" style="display:none">
+      <div class="page-title">Inventory</div>
+      <div class="page-sub">Live stock from Google Sheet — rack-wise rows &nbsp;<button class="btn-ghost" onclick="loadSheet(true)">↻ Refresh from Sheet</button></div>
+      <div class="toolbar">
+        <input id="invSearch" placeholder="Search design / colour / rack / SKU…" oninput="renderInventory()" style="flex:1;min-width:200px">
+        <select id="invRack" onchange="renderInventory()">
+          <option value="">All racks</option><option>BOX</option><option>RAC</option><option>SRI</option>
+        </select>
+        <select id="invStock" onchange="renderInventory()">
+          <option value="">All stock</option><option value="low">Low stock only</option>
+        </select>
+      </div>
+      <div class="card">
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px" id="invCount"></div>
+        <div class="scrolly" style="max-height:65vh">
+        <table><thead><tr><th>Rack</th><th>Design</th><th>Colour</th><th>Size</th><th>Qty</th><th>SKU</th></tr></thead>
+        <tbody id="invBody"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ANALYTICS -->
+    <section id="page-analytics" style="display:none">
+      <div class="page-title">Analytics</div>
+      <div class="page-sub">Live analysis from the inventory sheet &nbsp;<button class="btn-ghost" onclick="loadSheet(true)">↻ Refresh from Sheet</button></div>
+      <div class="two-col">
+        <div class="card">
+          <h3>Top Designs by Stock</h3>
+          <div id="designBars"></div>
+        </div>
+        <div class="card">
+          <h3>Colour-wise Stock</h3>
+          <div id="colorBars"></div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <h3>Size Distribution</h3>
+          <div id="sizeBars"></div>
+        </div>
+        <div class="card">
+          <h3>Rack Series Summary</h3>
+          <table><thead><tr><th>Series</th><th>Racks</th><th>SKU Rows</th><th>Pieces</th></tr></thead>
+          <tbody id="rackSummaryBody"></tbody></table>
+          <div class="notice" style="margin-top:14px;margin-bottom:0" id="negNotice"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Design-wise Detail</h3>
+        <div class="scrolly">
+        <table><thead><tr><th>Design</th><th>Colours</th><th>SKUs</th><th>Racks Used</th><th>Total Pcs</th></tr></thead>
+        <tbody id="designDetailBody"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- STOCK IN/OUT -->
+    <section id="page-inout" style="display:none">
+      <div class="page-title">Stock IN / OUT</div>
+      <div class="page-sub">Record inward and outward movement — full audit trail</div>
+      <div class="notice">Prototype note: entries yahan local demo mein save hote hain. Full version mein ye seedha Google Sheet ke Transaction tab mein likhenge (Apps Script se).</div>
+      <div class="card">
+        <h3>New Entry</h3>
+        <div class="form-grid">
+          <div><label>Type</label><select id="txType"><option>IN</option><option>OUT</option></select></div>
+          <div><label>SKU (type to search)</label><input id="txSku" list="skuList" placeholder="14707-GREEN-M"><datalist id="skuList"></datalist></div>
+          <div><label>Quantity</label><input id="txQty" type="number" min="1" value="1"></div>
+          <div><label>Remark</label><input id="txRemark" placeholder="e.g. Party order / New GRN"></div>
+        </div>
+        <button class="btn-accent" onclick="addTx()">Save Entry</button>
+      </div>
+      <div class="card">
+        <h3>Transaction Log</h3>
+        <table><thead><tr><th>Date</th><th>Type</th><th>SKU</th><th>Qty</th><th>By</th><th>Remark</th></tr></thead>
+        <tbody id="txBody"></tbody></table>
+      </div>
+    </section>
+
+    <!-- ORDERS -->
+    <section id="page-orders" style="display:none">
+      <div class="page-title">Orders</div>
+      <div class="page-sub">Party-wise order tracking (demo data)</div>
+      <div class="card">
+        <table><thead><tr><th>Order #</th><th>Party</th><th>Items</th><th>Total Pcs</th><th>Date</th><th>Status</th><th></th></tr></thead>
+        <tbody id="orderBody"></tbody></table>
+      </div>
+    </section>
+
+    <!-- SAMPLES -->
+    <section id="page-samples" style="display:none">
+      <div class="page-title">Sample Register</div>
+      <div class="page-sub">Track samples leaving the warehouse (demo data)</div>
+      <div class="card">
+        <table><thead><tr><th>Date Out</th><th>SKU</th><th>Given To</th><th>Purpose</th><th>Status</th><th></th></tr></thead>
+        <tbody id="sampleBody"></tbody></table>
+      </div>
+    </section>
+
+    <!-- USERS -->
+    <section id="page-users" style="display:none">
+      <div class="page-title">Users &amp; Roles</div>
+      <div class="page-sub">Access control — who can do what</div>
+      <div class="card" id="usersCard">
+        <table><thead><tr><th>User ID</th><th>Name</th><th>Role</th><th>Access</th></tr></thead>
+        <tbody>
+          <tr><td><strong>ajita</strong></td><td>Ajita</td><td><span class="chip ok">Admin</span></td><td>Full access — all modules, user management</td></tr>
+          <tr><td><strong>hiren</strong></td><td>Hiren</td><td><span class="chip ok">Admin</span></td><td>Full access — all modules, user management</td></tr>
+        </tbody></table>
+        <p style="margin-top:14px;font-size:.82rem;color:var(--muted)">Prototype note: full version mein Admin yahan se naye users add kar sakega, password set karega aur module-level permissions control karega.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= CONFIG ================= */
+const SHEET_ID = '1VkEdXqH3NWMWzn67AnOIqmkMJbg4U4wFcvvLBG1I8Yo';
+const SHEET_GID = '0';
+
+const USERS = {
+  ajita:{pass:'ajita123', role:'Admin', name:'Ajita'},
+  hiren:{pass:'hiren123', role:'Admin', name:'Hiren'}
+};
+let currentUser = null;
+let dataSource = 'loading'; // live | demo | loading
+
+/* inventory rows: {rack, design, color, size, qty, sku} */
+let inventory = [];
+const DEMO_INVENTORY = [
+  {rack:'BOX1',  design:'14626', color:'GREEN',  size:'M',  qty:6},
+  {rack:'BOX10', design:'14698', color:'BLUE',   size:'L',  qty:4},
+  {rack:'BOX102',design:'14734', color:'RED',    size:'XL', qty:11},
+  {rack:'BOX138',design:'14931', color:'BLACK',  size:'L',  qty:28},
+  {rack:'BOX160',design:'14707', color:'GREEN',  size:'M',  qty:45},
+];
+
+let txLog = [
+  {date:'01 Jul 2026', type:'OUT', sku:'14707-GREEN-M', qty:12, by:'ajita', remark:'Order — Surat party'},
+  {date:'30 Jun 2026', type:'IN',  sku:'14931-BLACK-L', qty:28, by:'hiren', remark:'New GRN from factory'},
+];
+let orders = [
+  {id:'ORD-119', party:'Shree Fashion, Surat',  items:'14707 GREEN (M×10, L×8)', pcs:18, date:'02 Jul 2026', status:'Pending'},
+  {id:'ORD-118', party:'Kanha Textiles, Rajkot',items:'14931 BLACK (L×12)',      pcs:12, date:'01 Jul 2026', status:'Dispatched'},
+  {id:'ORD-117', party:'Mahavir Garments, Baroda',items:'KIS1952 BLUE (XL×10)',  pcs:10, date:'30 Jun 2026', status:'Pending'},
+];
+let samples = [
+  {date:'28 Jun 2026', sku:'ASP2048-RED-XL',   to:'Rakeshbhai (Agent)', purpose:'Party showing — Ahmedabad', status:'Out'},
+  {date:'25 Jun 2026', sku:'14710CORDSET-GREEN-L', to:'Shree Fashion',  purpose:'Bulk order sample',          status:'Returned'},
+  {date:'22 Jun 2026', sku:'KIS1897-YELLOW-3XL',to:'Photo studio',      purpose:'Catalogue shoot',            status:'Out'},
+];
+
+/* ================= SHEET LOADER ================= */
+async function loadSheet(manual){
+  setBadge('loading','Loading sheet…');
+  try{
+    const url = 'https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:json&gid='+SHEET_GID+'&t='+Date.now();
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const text = await res.text();
+    const json = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}')+1));
+    const cols = (json.table.cols||[]).map(c=>String(c.label||''));
+    const rows = (json.table.rows||[]).map(r=>(r.c||[]).map(c=>c==null?'':(c.v==null?'':c.v)));
+    const all = [cols].concat(rows);
+
+    /* find header row: contains RACK + DESIGN */
+    let hIdx=-1, map={};
+    for(let i=0;i<Math.min(all.length,25);i++){
+      const row = all[i].map(v=>String(v).toUpperCase());
+      const ri = row.findIndex(v=>/RACK/.test(v));
+      const di = row.findIndex(v=>/DESIGN/.test(v));
+      const qi = row.findIndex(v=>/^(QTY|QUANTITY)/.test(v.replace(/\s/g,'')));
+      if(ri>-1 && di>-1 && qi>-1){
+        hIdx=i;
+        map.rack=ri; map.design=di; map.qty=qi;
+        map.color=row.findIndex(v=>/COLOU?R/.test(v));
+        map.size=row.findIndex(v=>/^SIZE/.test(v));
+        break;
+      }
+    }
+    if(hIdx<0) throw new Error('Header row not found');
+
+    const inv=[];
+    for(let i=hIdx+1;i<all.length;i++){
+      const r=all[i];
+      const rack=String(r[map.rack]||'').trim().toUpperCase();
+      const design=String(r[map.design]||'').trim().toUpperCase();
+      const color=String(r[map.color]||'').trim().toUpperCase();
+      const size=String(r[map.size]||'').trim().toUpperCase();
+      const qty=Number(r[map.qty]);
+      if(!rack || !design || isNaN(qty)) continue;
+      inv.push({rack, design, color, size, qty});
+    }
+    if(!inv.length) throw new Error('No data rows');
+    inventory = inv;
+    dataSource='live';
+    setBadge('live','● Live — Google Sheet ('+inv.length.toLocaleString('en-IN')+' rows)');
+    if(manual) toast('Sheet refreshed — '+inv.length+' rows loaded');
+  }catch(e){
+    console.error('Sheet load failed:', e);
+    inventory = DEMO_INVENTORY.slice();
+    dataSource='demo';
+    setBadge('demo','Demo data — sheet not reachable');
+    if(manual) toast('Sheet load nahi hui — check sharing: "Anyone with link → Viewer"');
+  }
+  inventory.forEach(i=>i.sku=[i.design,i.color,i.size].filter(Boolean).join('-'));
+  if(currentUser) renderAll();
+}
+function setBadge(cls,txt){
+  const b=document.getElementById('srcBadge');
+  b.className='src-badge '+cls; b.textContent=txt;
+}
+
+/* ================= AGGREGATION ================= */
+function skuTotals(){
+  const m={};
+  inventory.forEach(i=>{
+    if(!m[i.sku]) m[i.sku]={sku:i.sku,design:i.design,color:i.color,size:i.size,qty:0,racks:new Set()};
+    m[i.sku].qty+=i.qty; m[i.sku].racks.add(i.rack);
+  });
+  return Object.values(m);
+}
+function groupSum(keyFn){
+  const m={};
+  inventory.forEach(i=>{const k=keyFn(i); if(!k)return; m[k]=(m[k]||0)+i.qty;});
+  return Object.entries(m).sort((a,b)=>b[1]-a[1]);
+}
+
+/* ================= AUTH & NAV ================= */
+function doLogin(){
+  const uid=document.getElementById('uid').value.trim().toLowerCase();
+  const pwd=document.getElementById('pwd').value;
+  const u=USERS[uid];
+  if(u && u.pass===pwd){
+    currentUser={id:uid,...u};
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.getElementById('whoami').textContent=currentUser.name;
+    document.getElementById('roleTag').textContent='ERP · '+currentUser.role;
+    renderAll();
+    toast('Welcome, '+currentUser.name+'!');
+  }else{
+    document.getElementById('loginError').style.display='block';
+    document.getElementById('pwd').value='';
+  }
+}
+function doLogout(){
+  currentUser=null;
+  document.getElementById('app').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('loginError').style.display='none';
+  document.getElementById('uid').value='';
+  document.getElementById('pwd').value='';
+  go('dashboard',document.querySelector('[data-page="dashboard"]'));
+}
+function go(page,btn){
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.querySelectorAll('main section').forEach(s=>s.style.display='none');
+  document.getElementById('page-'+page).style.display='block';
+}
+
+/* ================= RENDER ================= */
+function rackChip(rack){
+  const cls = rack.startsWith('SRI')?'sri':rack.startsWith('RAC')?'rac':'box';
+  return '<span class="chip '+cls+'">'+rack+'</span>';
+}
+function lowThresh(){ return Number(document.getElementById('lowThresh').value)||10; }
+
+function renderAll(){
+  renderDashboard(); renderInventory(); renderAnalytics(); renderTx(); renderOrders(); renderSamples(); fillSkuList();
+}
+function renderDashboard(){
+  document.getElementById('dashDate').textContent='Rizabella Warehouse · '+new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const totals=skuTotals();
+  const totalPcs=inventory.reduce((a,b)=>a+b.qty,0);
+  const T=lowThresh();
+  const low=totals.filter(s=>s.qty<T && s.qty>=0).sort((a,b)=>a.qty-b.qty);
+  document.getElementById('stTotalSku').textContent=totals.length.toLocaleString('en-IN');
+  document.getElementById('stTotalPcs').textContent=totalPcs.toLocaleString('en-IN');
+  document.getElementById('stDesigns').textContent=new Set(inventory.map(i=>i.design)).size;
+  document.getElementById('stRacks').textContent=new Set(inventory.map(i=>i.rack)).size;
+  document.getElementById('stLow').textContent=low.length;
+  document.getElementById('stSamples').textContent=samples.filter(s=>s.status==='Out').length;
+  document.getElementById('lowStockBody').innerHTML=low.slice(0,60).map(s=>
+    '<tr><td><strong>'+s.sku+'</strong></td><td>'+s.design+'</td><td>'+s.color+'</td><td>'+s.size+'</td><td>'+[...s.racks].map(rackChip).join(' ')+'</td><td class="qty-low">'+s.qty+'</td></tr>'
+  ).join('')||'<tr><td colspan="6" style="color:var(--muted)">No SKUs below '+T+' pcs 🎉</td></tr>';
+  document.getElementById('recentTxBody').innerHTML=txLog.slice(0,5).map(txRow).join('');
+}
+function renderInventory(){
+  const q=(document.getElementById('invSearch').value||'').toLowerCase();
+  const rack=document.getElementById('invRack').value;
+  const stock=document.getElementById('invStock').value;
+  const T=lowThresh();
+  const rows=inventory.filter(i=>{
+    if(q && !(i.sku+' '+i.rack).toLowerCase().includes(q)) return false;
+    if(rack && !i.rack.startsWith(rack)) return false;
+    if(stock==='low' && i.qty>=T) return false;
+    return true;
+  });
+  document.getElementById('invCount').textContent=rows.length.toLocaleString('en-IN')+' rows · '+rows.reduce((a,b)=>a+b.qty,0).toLocaleString('en-IN')+' pcs';
+  document.getElementById('invBody').innerHTML=rows.slice(0,800).map(i=>
+    '<tr><td>'+rackChip(i.rack)+'</td><td><strong>'+i.design+'</strong></td><td>'+i.color+'</td><td>'+i.size+'</td>'+
+    '<td'+(i.qty<T?' class="qty-low"':'')+'>'+i.qty+'</td><td style="color:var(--muted);font-size:.78rem">'+i.sku+'</td></tr>'
+  ).join('')||'<tr><td colspan="6" style="color:var(--muted)">No matching rows.</td></tr>';
+}
+function bars(el,data,cls,limit){
+  const max=Math.max(...data.slice(0,limit).map(d=>d[1]),1);
+  document.getElementById(el).innerHTML=data.slice(0,limit).map(d=>
+    '<div class="bar-row"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+d[0]+'">'+d[0]+'</div>'+
+    '<div class="bar-track"><div class="bar-fill '+cls+'" style="width:'+Math.round(d[1]/max*100)+'%"></div></div>'+
+    '<div class="bar-num">'+d[1].toLocaleString('en-IN')+'</div></div>'
+  ).join('');
+}
+function renderAnalytics(){
+  bars('designBars',groupSum(i=>i.design),'',12);
+  bars('colorBars',groupSum(i=>i.color),'accent',12);
+  const sizeOrder=['S','M','L','XL','XXL','3XL','4XL','5XL','6XL'];
+  const sizes=groupSum(i=>i.size).sort((a,b)=>{
+    const ai=sizeOrder.indexOf(a[0]),bi=sizeOrder.indexOf(b[0]);
+    return (ai<0?99:ai)-(bi<0?99:bi);
+  });
+  bars('sizeBars',sizes,'teal',12);
+  /* rack series */
+  const series={};
+  inventory.forEach(i=>{
+    const s=(i.rack.match(/^[A-Z]+/)||['OTHER'])[0];
+    if(!series[s]) series[s]={racks:new Set(),rows:0,pcs:0};
+    series[s].racks.add(i.rack); series[s].rows++; series[s].pcs+=i.qty;
+  });
+  document.getElementById('rackSummaryBody').innerHTML=Object.entries(series).sort((a,b)=>b[1].pcs-a[1].pcs).map(([k,v])=>
+    '<tr><td><strong>'+k+'</strong></td><td>'+v.racks.size+'</td><td>'+v.rows.toLocaleString('en-IN')+'</td><td>'+v.pcs.toLocaleString('en-IN')+'</td></tr>'
+  ).join('');
+  const neg=inventory.filter(i=>i.qty<0);
+  document.getElementById('negNotice').innerHTML = neg.length
+    ? '⚠️ '+neg.length+' rows mein negative quantity hai (data error) — e.g. '+neg[0].rack+' · '+neg[0].sku+' ('+neg[0].qty+'). Sheet mein check karo.'
+    : '✓ No negative quantities — data clean hai.';
+  /* design detail */
+  const dm={};
+  inventory.forEach(i=>{
+    if(!dm[i.design]) dm[i.design]={colors:new Set(),skus:new Set(),racks:new Set(),pcs:0};
+    dm[i.design].colors.add(i.color); dm[i.design].skus.add(i.sku); dm[i.design].racks.add(i.rack); dm[i.design].pcs+=i.qty;
+  });
+  document.getElementById('designDetailBody').innerHTML=Object.entries(dm).sort((a,b)=>b[1].pcs-a[1].pcs).map(([k,v])=>
+    '<tr><td><strong>'+k+'</strong></td><td>'+[...v.colors].join(', ')+'</td><td>'+v.skus.size+'</td><td>'+v.racks.size+'</td><td><strong>'+v.pcs.toLocaleString('en-IN')+'</strong></td></tr>'
+  ).join('');
+}
+function txRow(t){
+  return '<tr><td>'+t.date+'</td><td><span class="chip '+t.type.toLowerCase()+'">'+t.type+'</span></td><td><strong>'+t.sku+'</strong></td><td>'+t.qty+'</td><td>'+t.by+'</td><td>'+t.remark+'</td></tr>';
+}
+function renderTx(){ document.getElementById('txBody').innerHTML=txLog.map(txRow).join(''); }
+function fillSkuList(){
+  const seen=new Set();
+  document.getElementById('skuList').innerHTML=inventory.filter(i=>!seen.has(i.sku)&&seen.add(i.sku)).map(i=>'<option value="'+i.sku+'">').join('');
+}
+function addTx(){
+  const type=document.getElementById('txType').value;
+  const sku=document.getElementById('txSku').value.trim().toUpperCase();
+  const qty=parseInt(document.getElementById('txQty').value,10);
+  const remark=document.getElementById('txRemark').value.trim()||'—';
+  if(!sku){toast('SKU select karo');return;}
+  if(!qty||qty<1){toast('Valid quantity daalo');return;}
+  const matches=inventory.filter(i=>i.sku===sku);
+  if(!matches.length){toast('SKU nahi mila: '+sku);return;}
+  const total=matches.reduce((a,b)=>a+b.qty,0);
+  if(type==='OUT'&&total<qty){toast('Sirf '+total+' pcs stock mein hai — '+sku);return;}
+  /* adjust locally (demo): apply to first rack row */
+  let rem=qty;
+  for(const m of matches){
+    if(type==='IN'){m.qty+=qty;break;}
+    const take=Math.min(m.qty,rem); m.qty-=take; rem-=take;
+    if(rem<=0)break;
+  }
+  txLog.unshift({date:new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),type,sku,qty,by:currentUser.id,remark});
+  document.getElementById('txRemark').value='';document.getElementById('txQty').value=1;
+  renderAll();
+  toast(type+' entry saved · '+sku+' × '+qty+(dataSource==='live'?' (local demo — sheet unchanged)':''));
+}
+function renderOrders(){
+  document.getElementById('orderBody').innerHTML=orders.map((o,idx)=>
+    '<tr><td><strong>'+o.id+'</strong></td><td>'+o.party+'</td><td>'+o.items+'</td><td>'+o.pcs+'</td><td>'+o.date+'</td>'+
+    '<td><span class="chip '+(o.status==='Pending'?'pending':'dispatched')+'">'+o.status+'</span></td>'+
+    '<td>'+(o.status==='Pending'?'<button class="btn-ghost" onclick="dispatchOrder('+idx+')">Mark Dispatched</button>':'')+'</td></tr>'
+  ).join('');
+}
+function dispatchOrder(idx){orders[idx].status='Dispatched';renderAll();toast(orders[idx].id+' marked dispatched');}
+function renderSamples(){
+  document.getElementById('sampleBody').innerHTML=samples.map((s,idx)=>
+    '<tr><td>'+s.date+'</td><td><strong>'+s.sku+'</strong></td><td>'+s.to+'</td><td>'+s.purpose+'</td>'+
+    '<td><span class="chip '+(s.status==='Out'?'sample-out':'ok')+'">'+s.status+'</span></td>'+
+    '<td>'+(s.status==='Out'?'<button class="btn-ghost" onclick="returnSample('+idx+')">Mark Returned</button>':'')+'</td></tr>'
+  ).join('');
+}
+function returnSample(idx){samples[idx].status='Returned';renderAll();toast('Sample marked returned');}
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+/* boot: start loading sheet immediately so it's ready by login */
+loadSheet(false);
+</script>
+</body>
+</html>
