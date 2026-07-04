@@ -569,6 +569,22 @@ tbody tr.row-selected:hover{background:#ddd4f5 !important;}
     </div>
     <p style="font-size:12px;color:#aaa;margin:8px 0 14px;">Yahan sab generated barcodes permanently save hain. Browser data delete karne tak yeh rahega.</p>
 
+    <!-- ══ CENTRAL SHEET SYNC (TEAM REGISTRY) ══ -->
+    <details id="reg-sync-box" style="border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:14px;background:var(--soft);">
+      <summary style="cursor:pointer;font-size:13px;font-weight:700;">☁ Central Sheet Sync — poori team ka record ek Google Sheet mein <span id="reg-sync-badge" style="background:#fff0e8;color:#c05200;border-radius:10px;font-size:11px;font-weight:700;padding:1px 8px;margin-left:6px;display:none;"></span></summary>
+      <div style="margin-top:10px;">
+        <p style="font-size:12px;color:#888;margin:0 0 8px;">Ek baar setup karo: Google Sheet banao → Extensions → Apps Script → neeche wala code paste → Deploy as Web App (Execute as: <b>Me</b>, Access: <b>Anyone</b>) → URL yahan paste karo. Har barcode generation apne aap Sheet mein bhi record hogi (kaun, kab, kya).</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <input id="reg-gas-url" type="text" placeholder="Apps Script Web App URL (…/exec)"
+            style="flex:1;min-width:220px;border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12px;font-family:'DM Sans',sans-serif;background:#fff;color:var(--ink);outline:none;">
+          <button class="btn-sm" onclick="regSaveGasUrl()">💾 Save URL</button>
+          <button class="btn-green" style="padding:6px 14px;font-size:12px;border-radius:8px;" onclick="regSyncNow()">☁ Sync Now</button>
+          <button class="btn-sm" onclick="showRegGasCode()">📜 Apps Script Code</button>
+        </div>
+        <pre id="reg-gas-code" style="display:none;margin-top:10px;background:#1a0f2e;color:#c9f0d8;font-size:11px;padding:12px;border-radius:8px;overflow:auto;max-height:300px;white-space:pre;"></pre>
+      </div>
+    </details>
+
     <!-- Search bar -->
     <div style="display:flex;gap:8px;margin-bottom:14px;">
       <input id="reg-search" type="text" placeholder="Design no., color, size, ya code se dhundo..." 
@@ -1024,6 +1040,112 @@ document.addEventListener('DOMContentLoaded', ()=>{
   const inp = $('operator-input'); if(inp) inp.value = operatorName;
 });
 
+/* -- CENTRAL SHEET SYNC (TEAM REGISTRY) --
+   Har generation ki entry queue mein jaati hai, phir Apps Script Web App ko POST.
+   Net na ho ya URL set na ho toh queue localStorage mein pending rehti hai —
+   agli generation ya page load pe automatically retry. */
+let regGasUrl = '';
+let regQueue  = [];
+try{ regGasUrl = localStorage.getItem('registryGasUrl') || ''; }catch(e){}
+try{ regQueue  = JSON.parse(localStorage.getItem('registrySyncQueue') || '[]'); }catch(e){}
+
+function cleanGasUrl(u){
+  // Ajita ka known browser issue: URL mein /u/2/ ghus jata hai — auto-strip
+  return String(u||'').trim().replace(/\/u\/\d+\//, '/');
+}
+function saveRegQueue(){ try{ localStorage.setItem('registrySyncQueue', JSON.stringify(regQueue)); }catch(e){} }
+function updateSyncBadge(){
+  const b = $('reg-sync-badge'); if(!b) return;
+  if(regQueue.length){ b.textContent = regQueue.length + ' pending'; b.style.display='inline'; }
+  else b.style.display='none';
+}
+function regSaveGasUrl(){
+  const raw = $('reg-gas-url').value;
+  const v = cleanGasUrl(raw);
+  if(v && !/\/exec\s*$/.test(v)){ toast('⚠ URL "/exec" pe khatam hona chahiye — Deploy wala URL paste karo'); }
+  regGasUrl = v;
+  $('reg-gas-url').value = v; // cleaned dikhao
+  try{ localStorage.setItem('registryGasUrl', v); }catch(e){}
+  toast(v ? '✅ Sync URL save ho gaya' : 'URL clear ho gaya');
+  if(v && regQueue.length) regSyncNow();
+}
+function queueForSheet(entries){
+  if(!entries || !entries.length) return;
+  entries.forEach(l => regQueue.push({
+    ts: l.ts, by: l.by || '—', design: l.design, color: l.color, size: l.size,
+    code: l.code, copies: l.copies, type: l.isReprint ? 'Reprint' : 'Fresh',
+    session: l.session, src: l.src || 'GENERATE'
+  }));
+  saveRegQueue(); updateSyncBadge();
+  regSyncNow(true); // silent auto-attempt
+}
+async function regSyncNow(silent){
+  if(!regGasUrl){
+    if(!silent){ toast('⚠ Pehle Apps Script URL save karo (☁ Central Sheet Sync box)'); const d=$('reg-sync-box'); if(d) d.open=true; }
+    return;
+  }
+  if(!regQueue.length){ if(!silent) toast('Sab pehle se synced hain ✅'); return; }
+  const batch = regQueue.slice();
+  if(!silent) toast('☁ Sync ho raha hai... ('+batch.length+' rows)');
+  try{
+    await fetch(regGasUrl, {
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ rows: batch })
+    });
+    // no-cors response opaque hoti hai — fetch throw nahi hua toh sent maan lete hain
+    regQueue = regQueue.slice(batch.length);
+    saveRegQueue(); updateSyncBadge();
+    if(!silent) toast('✅ '+batch.length+' rows central Sheet mein sync ho gaye');
+  }catch(err){
+    if(!silent) toast('❌ Sync fail — net ya URL check karo. Entries pending queue mein safe hain.');
+    updateSyncBadge();
+  }
+}
+function showRegGasCode(){
+  const pre = $('reg-gas-code');
+  if(pre.style.display==='block'){ pre.style.display='none'; return; }
+  pre.style.display='block';
+  pre.textContent = REG_GAS_CODE;
+  toast('Code copy karke Apps Script mein paste karo');
+}
+const REG_GAS_CODE = [
+'/* RIZABELLA — Central Barcode Registry (Code.gs)',
+'   Setup: Google Sheet kholo > Extensions > Apps Script > ye code paste >',
+'   Deploy > New deployment > Web app > Execute as: Me, Access: Anyone > Deploy.',
+'   Jo URL mile (…/exec) use studio ke Sync box mein paste karo. */',
+'function doPost(e){',
+"  var ss = SpreadsheetApp.getActiveSpreadsheet();",
+"  var sh = ss.getSheetByName('BARCODE_LOG');",
+'  if(!sh){',
+"    sh = ss.insertSheet('BARCODE_LOG');",
+"    sh.appendRow(['Date & Time','Kisne Nikala','Design','Color','Size','Barcode Code','Copies','Type','Session','Source','Received At']);",
+"    sh.getRange(1,1,1,11).setFontWeight('bold').setBackground('#2a1b4d').setFontColor('#ffffff');",
+'    sh.setFrozenRows(1);',
+'  }',
+'  var data = JSON.parse(e.postData.contents);',
+'  var now = new Date();',
+'  var rows = (data.rows || []).map(function(r){',
+'    return [r.ts, r.by, r.design, r.color, r.size, r.code, r.copies, r.type, r.session, r.src, now];',
+'  });',
+'  if(rows.length){',
+'    sh.getRange(sh.getLastRow()+1, 1, rows.length, 11).setValues(rows);',
+'  }',
+"  return ContentService.createTextOutput(JSON.stringify({ok:true, added:rows.length}))",
+'    .setMimeType(ContentService.MimeType.JSON);',
+'}',
+'function doGet(){',
+"  return ContentService.createTextOutput('RIZABELLA Registry Sync — chal raha hai ✓');",
+'}'
+].join('\n');
+// Page load pe: URL input bharo + pending queue retry
+document.addEventListener('DOMContentLoaded', ()=>{
+  const u = $('reg-gas-url'); if(u && regGasUrl) u.value = regGasUrl;
+  updateSyncBadge();
+  if(regGasUrl && regQueue.length) setTimeout(()=>regSyncNow(true), 1500);
+});
+
 /* -- REGISTRY HELPERS -- */
 function saveRegistry(){ try{ localStorage.setItem('barcodeRegistry', JSON.stringify(registry)); }catch(e){} }
 function registryHas(code){ return !!registry[code]; }
@@ -1171,15 +1293,18 @@ async function downloadBoxPDF(){
 
   // Registry + log mein record karo (kaun, kab, kya)
   const tsB = nowStr();
+  const boxEntries = [];
   codes.forEach(code => {
     const parts = code.split('-');
     const d = parts[0]||code, cl = parts[1]||'—', sz = parts.slice(2).join('-')||'—';
     const was = registryHas(code);
     registryAdd(code, d, cl, sz, 1, op);
-    log.unshift({ ts: tsB, design: d, color: cl, size: sz, code, copies: 1, session: sessionId, isReprint: was, by: op, src: 'BOX PDF' });
+    const en = { ts: tsB, design: d, color: cl, size: sz, code, copies: 1, session: sessionId, isReprint: was, by: op, src: 'BOX PDF' };
+    log.unshift(en); boxEntries.push(en);
   });
   if(log.length>1000) log = log.slice(0,1000);
   try{ localStorage.setItem('barcodeLog', JSON.stringify(log)); }catch(e){}
+  queueForSheet(boxEntries);
   renderRegistryCount();
 
   toast('✓ A4 PDF downloaded ('+codes.length+' barcodes)');
@@ -1315,17 +1440,20 @@ async function downloadDesignBoxPDF(){
 
   // Registry + log mein record karo (kaun, kab, kya)
   const tsD = nowStr();
+  const dwEntries = [];
   order.forEach(design => {
     (groups[design]||[]).forEach(code => {
       const parts = code.split('-');
       const d = parts[0]||code, cl = parts[1]||'—', sz = parts.slice(2).join('-')||'—';
       const was = registryHas(code);
       registryAdd(code, d, cl, sz, 1, op);
-      log.unshift({ ts: tsD, design: d, color: cl, size: sz, code, copies: 1, session: sessionId, isReprint: was, by: op, src: 'DESIGN PDF' });
+      const en = { ts: tsD, design: d, color: cl, size: sz, code, copies: 1, session: sessionId, isReprint: was, by: op, src: 'DESIGN PDF' };
+      log.unshift(en); dwEntries.push(en);
     });
   });
   if(log.length>1000) log = log.slice(0,1000);
   try{ localStorage.setItem('barcodeLog', JSON.stringify(log)); }catch(e){}
+  queueForSheet(dwEntries);
   renderRegistryCount();
 
   let msg = `✓ ${order.length} design page(s) PDF ban gayi`;
@@ -1488,9 +1616,11 @@ async function qpDownloadPDF(){
 
   const wasAlreadyInRegistry = registryHas(code);
   registryAdd(code, design, color, size, qty, op);
-  log.unshift({ ts: nowStr(), design, color, size, code, copies: qty, session: sessionId, isReprint: wasAlreadyInRegistry, by: op });
+  const qpEntry = { ts: nowStr(), design, color, size, code, copies: qty, session: sessionId, isReprint: wasAlreadyInRegistry, by: op, src: 'QUICK PRINT' };
+  log.unshift(qpEntry);
   if(log.length>1000) log = log.slice(0,1000);
   try{ localStorage.setItem('barcodeLog', JSON.stringify(log)); }catch(e){}
+  queueForSheet([qpEntry]);
   renderRegistryCount();
 
   toast(`✓ ${qty} sticker PDF download ho gayi — ${code}`);
@@ -2441,6 +2571,7 @@ function generateBarcodes(){
   log.unshift(...logEntries);
   if(log.length>1000) log=log.slice(0,1000);
   try{ localStorage.setItem('barcodeLog', JSON.stringify(log)); }catch(e){}
+  queueForSheet(logEntries);
 
   const ps = $('preview-section');
   ps.style.display = 'block';
@@ -4266,14 +4397,17 @@ async function csDownloadPDF(){
   const safe = s => s.replace(/[\/\\\s]+/g, '-');
   pdf.save(`CustomSticker_${safe(first.design)}_${safe(first.color)}_${w}x${h}mm.pdf`);
 
+  const csEntries = [];
   jobs.forEach(job => {
     const was = registryHas(job.code);
     registryAdd(job.code, job.design, job.color, job.size, job.qty, op);
-    log.unshift({ ts: nowStr(), design: job.design, color: job.color, size: job.size,
-      code: job.code, copies: job.qty, session: sessionId, isReprint: was, by: op });
+    const en = { ts: nowStr(), design: job.design, color: job.color, size: job.size,
+      code: job.code, copies: job.qty, session: sessionId, isReprint: was, by: op, src: 'CUSTOM STICKER' };
+    log.unshift(en); csEntries.push(en);
   });
   if(log.length > 1000) log = log.slice(0, 1000);
   try{ localStorage.setItem('barcodeLog', JSON.stringify(log)); }catch(e){}
+  queueForSheet(csEntries);
   renderRegistryCount();
 
   toast(`✓ ${labels.length} sticker PDF download ho gayi (${w}×${h}mm)`);
