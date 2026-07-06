@@ -121,7 +121,7 @@ td input{padding:6px 7px;font-size:13.5px;border-radius:7px}
 <!-- ============ TAB: NAYA ORDER ============ -->
 <div class="tab on" id="tab-new">
   <div class="card">
-    <label>WhatsApp Message Paste Karo</label>
+    <label>WhatsApp Message / Poora Chat Paste Karo</label>
     <textarea id="rawMsg" placeholder="Party ka WhatsApp message yaha paste karo...
 
 Example:
@@ -178,6 +178,13 @@ Token 5000 UPI"></textarea>
     <div class="mt"><label>Notes</label><input id="fNotes" placeholder="Dispatch date, special instruction..."></div>
 
     <button class="btn btn-ink mt" onclick="saveOrder()">✓ Order Save Karo</button>
+  </div>
+
+  <div class="card hidden" id="bulkCard">
+    <label>📥 Chat Export Detect Hua — <span id="bulkCount" style="color:var(--rani)"></span> Parties</label>
+    <p class="note" style="margin:0 0 10px">Har party ka alag order banega. Naam/token check karo, jo nahi chahiye use hatao, phir save.</p>
+    <div id="bulkList"></div>
+    <button class="btn btn-ink mt" onclick="saveBulk()">✓ Sab Orders Save + Sync Karo</button>
   </div>
 </div>
 
@@ -260,6 +267,28 @@ function isSize(t){return SIZE_RE.test(t.replace(/\s*(to|TO)\s*/,'-'))}
 function parseMsg(){
   const raw=document.getElementById('rawMsg').value.trim();
   if(!raw){toast('Pehle message paste karo');return}
+
+  // Poora chat export paste kiya? (multiple parties) → bulk mode
+  const bulk=parseChatExport(raw);
+  if(bulk && bulk.length){renderBulk(bulk);return}
+
+  const p=parseBlock(raw);
+  // fill form (single order mode)
+  document.getElementById('fParty').value=p.party;
+  document.getElementById('fPhone').value=p.phone;
+  document.getElementById('fToken').value=p.token||'';
+  document.getElementById('fTotal').value=p.total||'';
+  document.getElementById('fNotes').value=p.notes.join(' | ');
+  setMode(p.mode);
+  renderLines(p.items);
+  updateTag();
+  document.getElementById('bulkCard').classList.add('hidden');
+  document.getElementById('parsedCard').classList.remove('hidden');
+  document.getElementById('parsedCard').scrollIntoView({behavior:'smooth'});
+  toast(p.items.length+' line'+(p.items.length!==1?'s':'')+' parse ho gayi');
+}
+
+function parseBlock(raw){
   const lines=raw.split(/\n+/).map(l=>l.trim()).filter(Boolean);
 
   let party='',phone='',token=0,mode='',total=0,notes=[];
@@ -296,19 +325,99 @@ function parseMsg(){
     if(!party && /[A-Za-z]{3,}/.test(line) && !/^\d+$/.test(line)){party=line;continue}
     notes.push(line);
   }
+  return {party,phone,token,mode,total,items,notes};
+}
 
-  // fill form
-  document.getElementById('fParty').value=party;
-  document.getElementById('fPhone').value=phone;
-  document.getElementById('fToken').value=token||'';
-  document.getElementById('fTotal').value=total||'';
-  document.getElementById('fNotes').value=notes.join(' | ');
-  setMode(mode);
-  renderLines(items);
-  updateTag();
-  document.getElementById('parsedCard').classList.remove('hidden');
-  document.getElementById('parsedCard').scrollIntoView({behavior:'smooth'});
-  toast(items.length+' line'+(items.length!==1?'s':'')+' parse ho gayi');
+/* ===== WhatsApp CHAT EXPORT (multiple parties ek saath) ===== */
+// Android: "06/07/26, 5:13 pm - Meena Textiles: ASH 1877 RANI L-XXL 2"
+// iPhone:  "[06/07/26, 5:13:45 PM] Meena Textiles: ASH 1877 RANI L-XXL 2"
+const CHAT_RE=/^\[?(\d{1,2}\/\d{1,2}\/\d{2,4}),?\s+(\d{1,2}:\d{2}(?::\d{2})?\s?(?:[apAP]\.?[mM]\.?)?)\]?\s*[-–]?\s*([^:]{1,45}?):\s(.*)$/;
+
+function parseChatExport(raw){
+  const lines=raw.split(/\n/);
+  let hits=0;
+  for(const l of lines){if(CHAT_RE.test(l.trim()))hits++}
+  if(hits<2)return null; // normal single message hai, chat export nahi
+
+  const bySender={}; let cur=null;
+  for(const l of lines){
+    const t=l.trim(); if(!t)continue;
+    const m=t.match(CHAT_RE);
+    if(m){
+      if(/end-to-end encrypted|created group|added|left|changed the/i.test(m[4])){cur=null;continue}
+      const sender=m[3].trim();
+      if(!bySender[sender])bySender[sender]=[];
+      bySender[sender].push(m[4]);
+      cur=sender;
+    }else if(cur){
+      bySender[cur].push(t); // multi-line message continuation
+    }
+  }
+
+  const out=[];
+  for(const s in bySender){
+    const p=parseBlock(bySender[s].join('\n'));
+    if(!p.items.length && !p.token)continue; // is sender ke paas order/token nahi
+    // sender agar phone number hai toh phone bharo
+    if(/^\+?[\d\s\-]{8,}$/.test(s)){
+      p.phone=p.phone||s.replace(/\D/g,'').slice(-10);
+      p.party=p.party||('PARTY-'+p.phone.slice(-4));
+    }else{
+      p.party=s; // WhatsApp contact name hi party name
+    }
+    out.push(p);
+  }
+  return out;
+}
+
+let _bulk=[];
+function renderBulk(list){
+  _bulk=list;
+  document.getElementById('parsedCard').classList.add('hidden');
+  const bc=document.getElementById('bulkCard');
+  document.getElementById('bulkCount').textContent=list.length;
+  document.getElementById('bulkList').innerHTML=list.map((p,i)=>`
+    <div class="card" style="border-color:var(--rani);margin-bottom:10px" id="bulk-${i}">
+      <div class="row2">
+        <div><label>Party</label><input value="${esc(p.party)}" onchange="_bulk[${i}].party=this.value"></div>
+        <div><label>Phone</label><input value="${esc(p.phone)}" inputmode="numeric" onchange="_bulk[${i}].phone=this.value"></div>
+      </div>
+      <div class="ord-lines" style="margin:8px 0">${p.items.map(l=>`<b>${esc(l.design)}</b> ${esc(l.color)} ${esc(l.size)} × ${l.qty}`).join('<br>')||'<i style="color:var(--mut)">koi order line nahi</i>'}</div>
+      <div class="row2">
+        <div><label>Token ₹</label><input value="${p.token||''}" inputmode="numeric" onchange="_bulk[${i}].token=parseInt(this.value)||0"></div>
+        <div><label>Mode</label><select onchange="_bulk[${i}].mode=this.value">
+          ${['PENDING','CASH','UPI','CHEQUE'].map(m=>`<option ${p.mode===m?'selected':''}>${m}</option>`).join('')}
+        </select></div>
+      </div>
+      <button class="btn btn-ghost btn-sm mt" style="color:var(--rani)" onclick="_bulk[${i}]._skip=true;document.getElementById('bulk-${i}').remove()">✕ Ye party hatao</button>
+    </div>`).join('');
+  bc.classList.remove('hidden');
+  bc.scrollIntoView({behavior:'smooth'});
+  toast(list.length+' parties detect hui — check karke save karo');
+}
+
+function saveBulk(){
+  const now=new Date(); let n=0;
+  _bulk.forEach((p,idx)=>{
+    if(p._skip)return;
+    if(!p.items.length && !p.token)return;
+    orders.unshift({
+      id:'EXPO-'+(now.getTime()+idx).toString(36).toUpperCase(),
+      ts:new Date(now.getTime()+idx).toISOString(),
+      date:now.toLocaleDateString('en-IN')+' '+now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),
+      party:(p.party||'UNKNOWN').toUpperCase(), phone:p.phone||'',
+      lines:p.items, token:p.token||0, total:p.total||0,
+      mode:p.mode||'PENDING', notes:(p.notes||[]).join(' | '),
+      status:'PENDING', synced:false
+    });
+    n++;
+  });
+  persist(); hdr();
+  document.getElementById('bulkCard').classList.add('hidden');
+  document.getElementById('rawMsg').value='';
+  _bulk=[];
+  toast('✓ '+n+' orders save ho gaye');
+  autoSync();
 }
 
 function parseOrderLine(line){
@@ -421,6 +530,7 @@ function saveOrder(){
   setMode('');
   toast('✓ Order save ho gaya — '+party);
   hdr();
+  autoSync();
 }
 
 /* ============ ORDERS LIST ============ */
@@ -503,11 +613,14 @@ function saveGas(){
   localStorage.setItem(LSG,u);
   toast('URL save ho gaya');
 }
-async function syncAll(){
-  const url=cleanGasUrl(document.getElementById('gasUrl').value);
-  if(!url){toast('Pehle Apps Script URL daalo');return}
+function autoSync(){
+  if(localStorage.getItem(LSG))syncAll(true); // URL set hai toh chupchap sync
+}
+async function syncAll(silent){
+  const url=cleanGasUrl(document.getElementById('gasUrl').value)||localStorage.getItem(LSG)||'';
+  if(!url){if(!silent)toast('Pehle Apps Script URL daalo (Sync tab)');return}
   const pend=orders.filter(o=>!o.synced);
-  if(!pend.length){toast('Sab kuch already synced hai ✓');return}
+  if(!pend.length){if(!silent)toast('Sab kuch already synced hai ✓');return}
   const btn=document.getElementById('syncBtn');btn.disabled=true;btn.textContent='Syncing...';
   const st=document.getElementById('syncStatus');
   try{
@@ -516,11 +629,12 @@ async function syncAll(){
     if(j.ok){
       pend.forEach(o=>o.synced=true);persist();
       st.textContent='✓ '+pend.length+' order(s) sheet me chale gaye · '+new Date().toLocaleTimeString('en-IN');
-      toast('✓ Sync ho gaya');renderOrders();
+      toast(silent?'✓ Sheet me sync ho gaya':'✓ Sync ho gaya');renderOrders();
     }else throw new Error(j.error||'Server error');
   }catch(e){
     st.textContent='✗ Sync fail: '+e.message+' — data phone me safe hai, baad me retry karo.';
-    toast('Sync fail — baad me try karo');
+    if(!silent)toast('Sync fail — baad me try karo');
+    else toast('Order save hua ✓ (sync baad me hoga — net check karo)');
   }
   btn.disabled=false;btn.textContent='☁️ Google Sheet Me Sync Karo';
 }
