@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>RIZABELLA · Exhibition Order Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#221D28; --paper:#FCFBF7; --card:#FFFFFF;
+  --rani:#D6216E; --rani-soft:#FCE9F1;
+  --rama:#0E9384; --rama-soft:#E5F5F2;
+  --amber:#B45309; --amber-soft:#FDF0E1;
+  --line:#E7E2DA; --mut:#6E6878;
+  --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',system-ui,-apple-system,sans-serif;background:var(--paper);color:var(--ink);font-size:15px;padding-bottom:90px}
+h1,h2,h3,.disp{font-family:'Bricolage Grotesque','IBM Plex Sans',system-ui,sans-serif}
+
+header{padding:16px 16px 10px;display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+header h1{font-size:19px;font-weight:800;letter-spacing:.3px}
+header h1 span{color:var(--rani)}
+.hdr-stats{font-size:12px;color:var(--mut);font-weight:500;text-align:right}
+
+/* Tabs (bottom, thumb-friendly) */
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);display:flex;z-index:50;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;border:none;padding:11px 4px 9px;font-family:inherit;font-size:11.5px;font-weight:600;color:var(--mut);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav button.on{color:var(--rani)}
+nav button .ic{font-size:18px;line-height:1}
+nav button.on .ic{transform:scale(1.08)}
+
+main{padding:0 14px;max-width:760px;margin:0 auto}
+.tab{display:none}.tab.on{display:block}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
+label{display:block;font-size:12px;font-weight:600;color:var(--mut);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+textarea,input,select{width:100%;font-family:inherit;font-size:15px;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+textarea:focus,input:focus,select:focus{outline:none;border-color:var(--rani)}
+textarea{min-height:150px;resize:vertical;font-size:14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mt{margin-top:12px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;font-size:15px;font-weight:700;padding:13px 18px;border-radius:12px;border:none;cursor:pointer;width:100%}
+.btn-rani{background:var(--rani);color:#fff}
+.btn-ink{background:var(--ink);color:#fff}
+.btn-ghost{background:none;border:1.5px solid var(--line);color:var(--ink)}
+.btn-sm{width:auto;padding:8px 13px;font-size:13px;border-radius:9px}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.45}
+
+/* parsed line table */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);padding:6px 4px;border-bottom:1.5px solid var(--line)}
+td{padding:7px 4px;border-bottom:1px solid var(--line);vertical-align:middle}
+td input{padding:6px 7px;font-size:13.5px;border-radius:7px}
+.del-line{background:none;border:none;color:var(--rani);font-size:16px;cursor:pointer;padding:4px}
+.fixed-flag{font-size:10px;color:var(--rama);font-weight:600;display:block}
+
+/* Token tag — kapda price-tag signature */
+.tag{position:relative;background:var(--rani-soft);border:1.5px solid var(--rani);border-radius:8px 24px 24px 8px;padding:10px 16px 10px 26px;display:inline-flex;flex-direction:column;min-width:150px}
+.tag::before{content:'';position:absolute;left:9px;top:50%;transform:translateY(-50%);width:9px;height:9px;border-radius:50%;background:var(--paper);border:1.5px solid var(--rani)}
+.tag .amt{font-family:'Bricolage Grotesque',sans-serif;font-size:22px;font-weight:800;color:var(--rani)}
+.tag .lbl{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--mut)}
+.tag.green{background:var(--rama-soft);border-color:var(--rama)}
+.tag.green::before{border-color:var(--rama)}
+.tag.green .amt{color:var(--rama)}
+
+/* mode segmented */
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:70px;padding:10px 6px;border:1.5px solid var(--line);background:#fff;border-radius:10px;font-family:inherit;font-size:13.5px;font-weight:600;color:var(--mut);cursor:pointer}
+.seg button.on{border-color:var(--rani);background:var(--rani-soft);color:var(--rani)}
+
+/* order cards */
+.ord{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px 14px;margin-bottom:10px}
+.ord-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.ord h3{font-size:16px;font-weight:700}
+.ord .ph{font-size:12.5px;color:var(--mut)}
+.pill{font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;white-space:nowrap}
+.pill.pend{background:var(--amber-soft);color:var(--amber)}
+.pill.disp{background:var(--rama-soft);color:var(--rama)}
+.ord-lines{margin:9px 0;font-size:13px;color:var(--ink);line-height:1.55;font-variant-numeric:tabular-nums}
+.ord-lines b{font-weight:600}
+.ord-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.tok-mini{font-size:13px;font-weight:700;color:var(--rani)}
+.tok-mini.zero{color:var(--amber)}
+.ord-acts{display:flex;gap:6px}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--amber);display:inline-block;margin-right:5px}
+.sync-dot.ok{background:var(--rama)}
+
+/* party summary */
+.psum{display:flex;justify-content:space-between;align-items:center;padding:12px 4px;border-bottom:1px solid var(--line);gap:8px}
+.psum .nm{font-weight:700;font-size:15px}
+.psum .sub{font-size:12px;color:var(--mut)}
+.psum .tk{font-weight:800;color:var(--rani);font-size:16px;font-family:'Bricolage Grotesque',sans-serif;white-space:nowrap}
+
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px}
+.stat .v{font-family:'Bricolage Grotesque',sans-serif;font-size:24px;font-weight:800}
+.stat .k{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);margin-top:2px}
+.stat.hl .v{color:var(--rani)}
+
+.note{font-size:12.5px;color:var(--mut);line-height:1.5;margin-top:8px}
+.toast{position:fixed;bottom:78px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:99px;font-size:13.5px;font-weight:600;z-index:99;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.empty{text-align:center;color:var(--mut);padding:36px 12px;font-size:14px}
+.search-bar{margin-bottom:10px}
+.hidden{display:none!important}
+@media(min-width:600px){.stat-grid{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>RIZA<span>BELLA</span> · Exhibition</h1>
+  <div class="hdr-stats" id="hdrStats"></div>
+</header>
+
+<main>
+
+<!-- ============ TAB: NAYA ORDER ============ -->
+<div class="tab on" id="tab-new">
+  <div class="card">
+    <label>WhatsApp Message Paste Karo</label>
+    <textarea id="rawMsg" placeholder="Party ka WhatsApp message yaha paste karo...
+
+Example:
+Meena Textiles
+9876543210
+ASH 1877 RANI L-XXL 2
+D-405 PISTA M-XL 3
+1102 MEHANDI FREE 1
+Token 5000 UPI"></textarea>
+    <button class="btn btn-rani mt" onclick="parseMsg()">⚡ Parse Karo</button>
+  </div>
+
+  <div class="card hidden" id="parsedCard">
+    <div class="row2">
+      <div><label>Party Name</label><input id="fParty" placeholder="Party ka naam"></div>
+      <div><label>Phone</label><input id="fPhone" inputmode="numeric" placeholder="10 digit"></div>
+    </div>
+
+    <div class="mt">
+      <label>Order Lines <span id="lineCount" style="color:var(--rani)"></span></label>
+      <table id="linesTable">
+        <thead><tr><th>Design</th><th>Color</th><th>Size</th><th style="width:52px">Sets</th><th></th></tr></thead>
+        <tbody id="linesBody"></tbody>
+      </table>
+      <button class="btn btn-ghost btn-sm mt" onclick="addLine()">＋ Line Add</button>
+    </div>
+
+    <div class="mt row2">
+      <div>
+        <label>Token Amount (₹)</label>
+        <input id="fToken" inputmode="numeric" placeholder="0" oninput="updateTag()">
+      </div>
+      <div>
+        <label>Total Amount (optional)</label>
+        <input id="fTotal" inputmode="numeric" placeholder="—" oninput="updateTag()">
+      </div>
+    </div>
+
+    <div class="mt">
+      <label>Payment Mode</label>
+      <div class="seg" id="modeSeg">
+        <button data-m="CASH">💵 Cash</button>
+        <button data-m="UPI">📱 UPI</button>
+        <button data-m="CHEQUE">🏦 Cheque</button>
+        <button data-m="PENDING">⏳ Pending</button>
+      </div>
+    </div>
+
+    <div class="mt" style="display:flex;gap:12px;flex-wrap:wrap">
+      <div class="tag" id="tokTag"><span class="amt" id="tokAmt">₹0</span><span class="lbl">Token Mila</span></div>
+      <div class="tag green hidden" id="balTag"><span class="amt" id="balAmt">₹0</span><span class="lbl">Balance Baki</span></div>
+    </div>
+
+    <div class="mt"><label>Notes</label><input id="fNotes" placeholder="Dispatch date, special instruction..."></div>
+
+    <button class="btn btn-ink mt" onclick="saveOrder()">✓ Order Save Karo</button>
+  </div>
+</div>
+
+<!-- ============ TAB: ORDERS ============ -->
+<div class="tab" id="tab-orders">
+  <div class="search-bar"><input id="srch" placeholder="🔍 Party / design / color search..." oninput="renderOrders()"></div>
+  <div id="ordersList"></div>
+</div>
+
+<!-- ============ TAB: PARTY SUMMARY ============ -->
+<div class="tab" id="tab-party">
+  <div class="stat-grid" id="statGrid"></div>
+  <div class="card"><div id="partyList"></div></div>
+</div>
+
+<!-- ============ TAB: SYNC ============ -->
+<div class="tab" id="tab-sync">
+  <div class="card">
+    <label>Google Apps Script URL</label>
+    <input id="gasUrl" placeholder="https://script.google.com/macros/s/.../exec" onchange="saveGas()">
+    <p class="note">Deploy karne ke baad exec URL yaha daalo. /u/1/ /u/2/ wala issue automatic clean ho jayega.</p>
+    <button class="btn btn-rani mt" onclick="syncAll()" id="syncBtn">☁️ Google Sheet Me Sync Karo</button>
+    <p class="note" id="syncStatus"></p>
+  </div>
+  <div class="card">
+    <label>Backup / Export</label>
+    <button class="btn btn-ghost" onclick="exportCSV()">⬇ CSV Download</button>
+    <button class="btn btn-ghost mt" onclick="exportJSON()">⬇ JSON Backup</button>
+    <div class="mt"><label>JSON Restore</label><input type="file" id="jsonFile" accept=".json" onchange="importJSON(event)"></div>
+    <p class="note">Roz shaam ko ek JSON backup le lena — exhibition ka data phone me safe rahega chahe kuch bhi ho.</p>
+  </div>
+</div>
+
+</main>
+
+<nav>
+  <button class="on" onclick="showTab('new',this)"><span class="ic">📝</span>Naya Order</button>
+  <button onclick="showTab('orders',this)"><span class="ic">📦</span>Orders</button>
+  <button onclick="showTab('party',this)"><span class="ic">👥</span>Party</button>
+  <button onclick="showTab('sync',this)"><span class="ic">☁️</span>Sync</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= DATA ================= */
+const LS='RZB_EXPO_ORDERS', LSG='RZB_EXPO_GAS';
+let orders = JSON.parse(localStorage.getItem(LS)||'[]');
+let curMode = '';
+
+const COLORS=["RANI","RAMA","PISTA","MEHANDI","GAJRI","GAJARI","RED","MAROON","WINE","PINK","BABY PINK","PEACH","ORANGE","MUSTARD","YELLOW","LEMON","GREEN","BOTTLE GREEN","SEA GREEN","PARROT","OLIVE","TEAL","FIROZI","SKY","BLUE","ROYAL BLUE","NAVY","INK","PURPLE","LAVENDER","VIOLET","MAGENTA","BROWN","COFFEE","CHIKU","BEIGE","CREAM","OFF WHITE","WHITE","GREY","SILVER","BLACK","GOLD","COPPER","ONION","DUSTY PINK","ROSE GOLD","CHERRY","TOMATO","RUST","MULTI","DENIM","AQUA","MINT","CORAL"];
+
+/* ============ Damerau-Levenshtein fuzzy color fix ============ */
+function dlDist(a,b){
+  const m=a.length,n=b.length;
+  const d=Array.from({length:m+1},()=>new Array(n+1).fill(0));
+  for(let i=0;i<=m;i++)d[i][0]=i;
+  for(let j=0;j<=n;j++)d[0][j]=j;
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++){
+    const c=a[i-1]===b[j-1]?0:1;
+    d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+c);
+    if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])d[i][j]=Math.min(d[i][j],d[i-2][j-2]+c);
+  }
+  return d[m][n];
+}
+function fixColor(raw){
+  const c=raw.toUpperCase().trim();
+  if(COLORS.includes(c))return{color:c,fixed:false};
+  let best=null,bd=99;
+  for(const k of COLORS){const dd=dlDist(c,k);if(dd<bd){bd=dd;best=k}}
+  const thr=c.length<=4?1:2;
+  if(bd<=thr)return{color:best,fixed:true,orig:c};
+  return{color:c,fixed:false};
+}
+
+/* ================= PARSER ================= */
+const SIZE_RE=/^(FREE|F|XS|S|M|L|XL|XXL|3XL|4XL|5XL|\d{2})([\-–—to]+(XS|S|M|L|XL|XXL|3XL|4XL|5XL|\d{2}))?$/i;
+function isSize(t){return SIZE_RE.test(t.replace(/\s*(to|TO)\s*/,'-'))}
+
+function parseMsg(){
+  const raw=document.getElementById('rawMsg').value.trim();
+  if(!raw){toast('Pehle message paste karo');return}
+  const lines=raw.split(/\n+/).map(l=>l.trim()).filter(Boolean);
+
+  let party='',phone='',token=0,mode='',total=0,notes=[];
+  const items=[];
+
+  for(let line of lines){
+    // phone
+    const pm=line.match(/(\+?91[\s\-]?)?([6-9]\d{9})\b/);
+    if(pm && line.replace(/[\s\-+0-9]/g,'').length<3){phone=pm[2];continue}
+
+    // token / advance line
+    const tm=line.match(/(?:token|advance|adv|टोकन|tokan)\s*[:\-]?\s*(?:rs\.?|₹|inr)?\s*([\d,]+)/i)
+           || line.match(/(?:rs\.?|₹)\s*([\d,]+)\s*(?:token|advance|adv)/i);
+    if(tm){
+      token=parseInt(tm[1].replace(/,/g,''));
+      if(/upi|gpay|phonepe|paytm|online/i.test(line))mode='UPI';
+      else if(/cash|nagad|नकद/i.test(line))mode='CASH';
+      else if(/cheque|check|chq/i.test(line))mode='CHEQUE';
+      continue;
+    }
+    // standalone mode
+    if(/^(upi|gpay|phonepe|paytm)$/i.test(line)){mode='UPI';continue}
+    if(/^cash$/i.test(line)){mode='CASH';continue}
+
+    // total
+    const totM=line.match(/(?:total|bill)\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+)/i);
+    if(totM){total=parseInt(totM[1].replace(/,/g,''));continue}
+
+    // order line attempt
+    const parsed=parseOrderLine(line);
+    if(parsed){items.push(parsed);continue}
+
+    // party name: first non-order, non-phone text line
+    if(!party && /[A-Za-z]{3,}/.test(line) && !/^\d+$/.test(line)){party=line;continue}
+    notes.push(line);
+  }
+
+  // fill form
+  document.getElementById('fParty').value=party;
+  document.getElementById('fPhone').value=phone;
+  document.getElementById('fToken').value=token||'';
+  document.getElementById('fTotal').value=total||'';
+  document.getElementById('fNotes').value=notes.join(' | ');
+  setMode(mode);
+  renderLines(items);
+  updateTag();
+  document.getElementById('parsedCard').classList.remove('hidden');
+  document.getElementById('parsedCard').scrollIntoView({behavior:'smooth'});
+  toast(items.length+' line'+(items.length!==1?'s':'')+' parse ho gayi');
+}
+
+function parseOrderLine(line){
+  // normalize separators
+  let t=line.replace(/[,;|]+/g,' ').replace(/\s+/g,' ').trim();
+  let tokens=t.split(' ');
+  if(tokens.length<2)return null;
+
+  // qty = last token if pure number 1-999
+  let qty=1;
+  const last=tokens[tokens.length-1];
+  if(/^\d{1,3}$/.test(last)&&tokens.length>=3){qty=parseInt(last);tokens.pop()}
+
+  // size = last token if matches size pattern (join "L - XXL" style first)
+  t=tokens.join(' ').replace(/\s*[-–—]\s*/g,'-').replace(/\s+to\s+/i,'-');
+  tokens=t.split(' ');
+  let size='';
+  const lastT=tokens[tokens.length-1];
+  if(isSize(lastT)){size=lastT.toUpperCase();tokens.pop()}
+
+  if(tokens.length<2)return null;
+
+  // design = leading tokens (letters+digits merge: ASH 1877 -> ASH1877); color = trailing tokens
+  // find split: design is first token, plus second if pattern LETTERS then DIGITS
+  let design=tokens[0].toUpperCase();
+  let ci=1;
+  if(tokens.length>2 && /^[A-Z]+[-]?$/i.test(tokens[0]) && /^\d+[A-Z]*$/i.test(tokens[1])){
+    design=(tokens[0]+tokens[1]).toUpperCase().replace(/\s/g,'');
+    ci=2;
+  }
+  if(ci>=tokens.length)return null;
+  const colorRaw=tokens.slice(ci).join(' ');
+  // sanity: design must contain a digit OR be >=3 chars; reject lines like "thank you"
+  if(!/\d/.test(design)&&design.length<3)return null;
+  if(!/\d/.test(design)&&!/\d/.test(colorRaw)&&!size&&qty===1){
+    // probably just text, only accept if color is a known color
+    const chk=fixColor(colorRaw);
+    if(!COLORS.includes(chk.color))return null;
+  }
+  const cf=fixColor(colorRaw);
+  return{design,color:cf.color,fixed:cf.fixed?cf.orig:'',size:size||'FREE',qty};
+}
+
+/* ============ FORM lines ============ */
+function renderLines(items){
+  const tb=document.getElementById('linesBody');tb.innerHTML='';
+  items.forEach(it=>appendLineRow(it));
+  countLines();
+}
+function appendLineRow(it={design:'',color:'',size:'',qty:1,fixed:''}){
+  const tb=document.getElementById('linesBody');
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td><input class="ld" value="${esc(it.design)}"></td>
+    <td><input class="lc" value="${esc(it.color)}">${it.fixed?`<span class="fixed-flag">✓ fixed: ${esc(it.fixed)}</span>`:''}</td>
+    <td><input class="ls" value="${esc(it.size)}"></td>
+    <td><input class="lq" inputmode="numeric" value="${it.qty}"></td>
+    <td><button class="del-line" onclick="this.closest('tr').remove();countLines()">✕</button></td>`;
+  tb.appendChild(tr);
+}
+function addLine(){appendLineRow();countLines()}
+function countLines(){
+  const n=document.querySelectorAll('#linesBody tr').length;
+  document.getElementById('lineCount').textContent=n?`(${n})`:'';
+}
+function setMode(m){
+  curMode=m;
+  document.querySelectorAll('#modeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
+}
+document.querySelectorAll('#modeSeg button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+
+function updateTag(){
+  const tk=parseInt(document.getElementById('fToken').value)||0;
+  const tt=parseInt(document.getElementById('fTotal').value)||0;
+  document.getElementById('tokAmt').textContent='₹'+tk.toLocaleString('en-IN');
+  const bt=document.getElementById('balTag');
+  if(tt>0){bt.classList.remove('hidden');document.getElementById('balAmt').textContent='₹'+(tt-tk).toLocaleString('en-IN')}
+  else bt.classList.add('hidden');
+}
+
+/* ============ SAVE ============ */
+function saveOrder(){
+  const party=document.getElementById('fParty').value.trim();
+  if(!party){toast('Party name daalo');return}
+  const rows=[...document.querySelectorAll('#linesBody tr')].map(tr=>({
+    design:tr.querySelector('.ld').value.trim().toUpperCase().replace(/\s+/g,''),
+    color:tr.querySelector('.lc').value.trim().toUpperCase(),
+    size:tr.querySelector('.ls').value.trim().toUpperCase()||'FREE',
+    qty:parseInt(tr.querySelector('.lq').value)||1
+  })).filter(r=>r.design);
+  if(!rows.length){toast('Kam se kam 1 order line chahiye');return}
+  const now=new Date();
+  const ord={
+    id:'EXPO-'+now.getTime().toString(36).toUpperCase(),
+    ts:now.toISOString(),
+    date:now.toLocaleDateString('en-IN')+' '+now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),
+    party, phone:document.getElementById('fPhone').value.trim(),
+    lines:rows,
+    token:parseInt(document.getElementById('fToken').value)||0,
+    total:parseInt(document.getElementById('fTotal').value)||0,
+    mode:curMode||'PENDING',
+    notes:document.getElementById('fNotes').value.trim(),
+    status:'PENDING', synced:false
+  };
+  orders.unshift(ord);
+  persist();
+  // reset form
+  document.getElementById('rawMsg').value='';
+  document.getElementById('parsedCard').classList.add('hidden');
+  ['fParty','fPhone','fToken','fTotal','fNotes'].forEach(i=>document.getElementById(i).value='');
+  setMode('');
+  toast('✓ Order save ho gaya — '+party);
+  hdr();
+}
+
+/* ============ ORDERS LIST ============ */
+function renderOrders(){
+  const q=(document.getElementById('srch').value||'').toUpperCase();
+  const list=document.getElementById('ordersList');
+  const fl=orders.filter(o=>{
+    if(!q)return true;
+    return o.party.toUpperCase().includes(q)||o.lines.some(l=>l.design.includes(q)||l.color.includes(q));
+  });
+  if(!fl.length){list.innerHTML='<div class="empty">Abhi koi order nahi.<br>Naya Order tab se shuru karo.</div>';return}
+  list.innerHTML=fl.map(o=>{
+    const sets=o.lines.reduce((s,l)=>s+l.qty,0);
+    return `<div class="ord">
+      <div class="ord-top">
+        <div><h3>${esc(o.party)}</h3><div class="ph">${esc(o.phone||'—')} · ${o.date}</div></div>
+        <span class="pill ${o.status==='DISPATCHED'?'disp':'pend'}">${o.status==='DISPATCHED'?'✓ Dispatched':'Pending'}</span>
+      </div>
+      <div class="ord-lines">${o.lines.map(l=>`<b>${esc(l.design)}</b> ${esc(l.color)} ${esc(l.size)} × ${l.qty}`).join('<br>')}</div>
+      <div class="ord-foot">
+        <div>
+          <span class="sync-dot ${o.synced?'ok':''}" title="${o.synced?'Synced':'Not synced'}"></span>
+          <span class="tok-mini ${o.token?'':'zero'}">${o.token?'₹'+o.token.toLocaleString('en-IN')+' '+o.mode:'No token'}</span>
+          <span style="font-size:12px;color:var(--mut)"> · ${sets} sets</span>
+        </div>
+        <div class="ord-acts">
+          <button class="btn btn-ghost btn-sm" onclick="toggleStatus('${o.id}')">${o.status==='DISPATCHED'?'↩ Pending':'✓ Dispatch'}</button>
+          <button class="btn btn-ghost btn-sm" onclick="delOrder('${o.id}')" style="color:var(--rani)">🗑</button>
+        </div>
+      </div>
+      ${o.notes?`<div class="note">📝 ${esc(o.notes)}</div>`:''}
+    </div>`;
+  }).join('');
+}
+function toggleStatus(id){
+  const o=orders.find(x=>x.id===id);if(!o)return;
+  o.status=o.status==='DISPATCHED'?'PENDING':'DISPATCHED';
+  o.synced=false;
+  persist();renderOrders();
+}
+function delOrder(id){
+  if(!confirm('Ye order delete karna hai?'))return;
+  orders=orders.filter(x=>x.id!==id);persist();renderOrders();hdr();toast('Order delete ho gaya');
+}
+
+/* ============ PARTY SUMMARY ============ */
+function renderParty(){
+  const map={};
+  let totTok=0,totCash=0,totUpi=0,totSets=0;
+  orders.forEach(o=>{
+    const k=o.party.toUpperCase();
+    if(!map[k])map[k]={party:o.party,orders:0,sets:0,token:0,modes:new Set()};
+    const sets=o.lines.reduce((s,l)=>s+l.qty,0);
+    map[k].orders++;map[k].sets+=sets;map[k].token+=o.token;
+    if(o.token)map[k].modes.add(o.mode);
+    totTok+=o.token;totSets+=sets;
+    if(o.mode==='CASH')totCash+=o.token;
+    if(o.mode==='UPI')totUpi+=o.token;
+  });
+  document.getElementById('statGrid').innerHTML=`
+    <div class="stat hl"><div class="v">₹${totTok.toLocaleString('en-IN')}</div><div class="k">Total Token</div></div>
+    <div class="stat"><div class="v">${orders.length}</div><div class="k">Orders</div></div>
+    <div class="stat"><div class="v">₹${totCash.toLocaleString('en-IN')}</div><div class="k">Cash Mila</div></div>
+    <div class="stat"><div class="v">₹${totUpi.toLocaleString('en-IN')}</div><div class="k">UPI Mila</div></div>`;
+  const arr=Object.values(map).sort((a,b)=>b.token-a.token);
+  document.getElementById('partyList').innerHTML=arr.length?arr.map(p=>`
+    <div class="psum">
+      <div><div class="nm">${esc(p.party)}</div><div class="sub">${p.orders} order${p.orders>1?'s':''} · ${p.sets} sets${p.modes.size?' · '+[...p.modes].join('/'):''}</div></div>
+      <div class="tk">₹${p.token.toLocaleString('en-IN')}</div>
+    </div>`).join(''):'<div class="empty">Koi party nahi abhi.</div>';
+}
+
+/* ============ SYNC (Google Apps Script) ============ */
+function cleanGasUrl(u){
+  return (u||'').trim().replace(/\/u\/\d+\//,'/').replace(/\?.*$/,'');
+}
+function saveGas(){
+  const u=cleanGasUrl(document.getElementById('gasUrl').value);
+  document.getElementById('gasUrl').value=u;
+  localStorage.setItem(LSG,u);
+  toast('URL save ho gaya');
+}
+async function syncAll(){
+  const url=cleanGasUrl(document.getElementById('gasUrl').value);
+  if(!url){toast('Pehle Apps Script URL daalo');return}
+  const pend=orders.filter(o=>!o.synced);
+  if(!pend.length){toast('Sab kuch already synced hai ✓');return}
+  const btn=document.getElementById('syncBtn');btn.disabled=true;btn.textContent='Syncing...';
+  const st=document.getElementById('syncStatus');
+  try{
+    const res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'addOrders',orders:pend})});
+    const j=await res.json();
+    if(j.ok){
+      pend.forEach(o=>o.synced=true);persist();
+      st.textContent='✓ '+pend.length+' order(s) sheet me chale gaye · '+new Date().toLocaleTimeString('en-IN');
+      toast('✓ Sync ho gaya');renderOrders();
+    }else throw new Error(j.error||'Server error');
+  }catch(e){
+    st.textContent='✗ Sync fail: '+e.message+' — data phone me safe hai, baad me retry karo.';
+    toast('Sync fail — baad me try karo');
+  }
+  btn.disabled=false;btn.textContent='☁️ Google Sheet Me Sync Karo';
+}
+
+/* ============ EXPORT ============ */
+function exportCSV(){
+  if(!orders.length){toast('Koi order nahi hai');return}
+  let csv='ORDER ID,DATE,PARTY,PHONE,DESIGN,COLOR,SIZE,QTY SETS,TOKEN,MODE,TOTAL,STATUS,NOTES\n';
+  orders.forEach(o=>{
+    o.lines.forEach((l,i)=>{
+      csv+=[o.id,o.date,q(o.party),o.phone,l.design,q(l.color),l.size,l.qty,
+        i===0?o.token:'',i===0?o.mode:'',i===0?(o.total||''):'',o.status,i===0?q(o.notes):''].join(',')+'\n';
+    });
+  });
+  dl(csv,'EXHIBITION_ORDERS_'+today()+'.csv','text/csv');
+}
+function exportJSON(){
+  dl(JSON.stringify(orders,null,1),'EXPO_BACKUP_'+today()+'.json','application/json');
+}
+function importJSON(ev){
+  const f=ev.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{
+    const arr=JSON.parse(r.result);
+    if(!Array.isArray(arr))throw 0;
+    const ids=new Set(orders.map(o=>o.id));
+    let n=0;arr.forEach(o=>{if(!ids.has(o.id)){orders.push(o);n++}});
+    orders.sort((a,b)=>b.ts.localeCompare(a.ts));
+    persist();hdr();toast(n+' order(s) restore ho gaye');
+  }catch(e){toast('Invalid JSON file')}};
+  r.readAsText(f);
+}
+
+/* ============ UTIL ============ */
+function q(s){s=s||'';return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}
+function esc(s){return (s||'').toString().replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function dl(content,name,type){
+  const b=new Blob([content],{type});const a=document.createElement('a');
+  a.href=URL.createObjectURL(b);a.download=name;a.click();URL.revokeObjectURL(a.href);
+}
+function persist(){localStorage.setItem(LS,JSON.stringify(orders))}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2400)}
+function hdr(){
+  const tok=orders.reduce((s,o)=>s+o.token,0);
+  document.getElementById('hdrStats').innerHTML=orders.length+' orders · <b style="color:var(--rani)">₹'+tok.toLocaleString('en-IN')+'</b> token';
+}
+function showTab(id,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('tab-'+id).classList.add('on');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  if(id==='orders')renderOrders();
+  if(id==='party')renderParty();
+  window.scrollTo(0,0);
+}
+
+/* init */
+document.getElementById('gasUrl').value=localStorage.getItem(LSG)||'';
+hdr();
+</script>
+</body>
+</html>
