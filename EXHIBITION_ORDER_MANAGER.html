@@ -104,8 +104,16 @@ td input{padding:6px 7px;font-size:13.5px;border-radius:7px}
 .toast{position:fixed;bottom:78px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:99px;font-size:13.5px;font-weight:600;z-index:99;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1}
 .empty{text-align:center;color:var(--mut);padding:36px 12px;font-size:14px}
+.cl-tg{display:flex;align-items:center;gap:6px;font-weight:500;color:var(--ink);cursor:pointer;text-transform:none;letter-spacing:0;margin:0}
+.cl-tg input{width:auto;accent-color:var(--rani)}
 .search-bar{margin-bottom:10px}
 .hidden{display:none!important}
+/* cleaner toggles */
+.ctogs{display:flex;flex-wrap:wrap;gap:6px}
+.ctog{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;padding:7px 11px;border:1.5px solid var(--line);border-radius:99px;cursor:pointer;color:var(--mut);user-select:none;background:#fff}
+.ctog input{display:none}
+.ctog.on{border-color:var(--rani);background:var(--rani-soft);color:var(--rani)}
+.mono{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;line-height:1.5}
 @media(min-width:600px){.stat-grid{grid-template-columns:repeat(4,1fr)}}
 </style>
 </head>
@@ -200,6 +208,38 @@ Token 5000 UPI"></textarea>
   <div class="card"><div id="partyList"></div></div>
 </div>
 
+<!-- ============ TAB: CHAT CLEANER ============ -->
+<div class="tab" id="tab-clean">
+  <div class="card">
+    <label>WhatsApp Chat Paste Karo (raw)</label>
+    <textarea id="clInput" placeholder="[06/07, 09:50] Meena Textiles: ASH 1877 RANI L-XXL 2
+06/07/26, 9:51 am - Hiren: Okay
+(iPhone aur Android dono formats chalenge)" spellcheck="false"></textarea>
+    <div class="mt" style="display:flex;flex-wrap:wrap;gap:8px 14px;font-size:13px">
+      <label class="cl-tg"><input type="checkbox" id="clSender" checked> Sender name</label>
+      <label class="cl-tg"><input type="checkbox" id="clDate"> Date</label>
+      <label class="cl-tg"><input type="checkbox" id="clTime"> Time</label>
+      <label class="cl-tg"><input type="checkbox" id="clSystem" checked> System/Media msgs hatao</label>
+      <label class="cl-tg"><input type="checkbox" id="clTaskId" checked> Task IDs (T705...) hatao</label>
+      <label class="cl-tg"><input type="checkbox" id="clBlank"> Blank line beech me</label>
+    </div>
+    <div class="mt">
+      <label>Sender Filter</label>
+      <select id="clSenderFilter"><option value="__ALL__">Sab log</option></select>
+    </div>
+  </div>
+  <div class="card">
+    <label>Cleaned Output <span id="clStats" style="color:var(--rani);text-transform:none;letter-spacing:0"></span></label>
+    <textarea id="clOutput" readonly placeholder="Saaf chat yaha aayegi..."></textarea>
+    <button class="btn btn-rani mt" onclick="clToOrder()">📝 Naya Order Me Bhejo</button>
+    <div class="mt" style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="clCopy()">📋 Copy</button>
+      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="clDownload()">⬇ .txt</button>
+      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="clClear()">✕ Clear</button>
+    </div>
+  </div>
+</div>
+
 <!-- ============ TAB: SYNC ============ -->
 <div class="tab" id="tab-sync">
   <div class="card">
@@ -224,6 +264,7 @@ Token 5000 UPI"></textarea>
   <button class="on" onclick="showTab('new',this)"><span class="ic">📝</span>Naya Order</button>
   <button onclick="showTab('orders',this)"><span class="ic">📦</span>Orders</button>
   <button onclick="showTab('party',this)"><span class="ic">👥</span>Party</button>
+  <button onclick="showTab('clean',this)"><span class="ic">🧹</span>Cleaner</button>
   <button onclick="showTab('sync',this)"><span class="ic">☁️</span>Sync</button>
 </nav>
 
@@ -691,6 +732,110 @@ function showTab(id,btn){
   if(id==='party')renderParty();
   window.scrollTo(0,0);
 }
+
+/* ============ CHAT CLEANER ============ */
+const CL_INVIS=/[\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g;
+const CL_TASKID_LINE=/^\s*T?\d{2,5}\s*[❗‼️!⚠️]*\s*$/u;
+const CL_TASKID_PREFIX=/^\s*T\d{2,5}\s*[❗‼️!⚠️]*\s+/u;
+const CL_SYSTEM=[/messages and calls are end-to-end encrypted/i,/^<media omitted>$/i,/^image omitted$/i,/^video omitted$/i,/^audio omitted$/i,/^sticker omitted$/i,/^document omitted$/i,/^gif omitted$/i,/^this message was deleted\.?$/i,/^you deleted this message\.?$/i,/created group/i,/added you/i,/joined using this group/i,/left$/i,/changed the subject/i,/changed this group's icon/i,/^missed voice call/i,/^missed video call/i];
+const CL_IOS=/^\[(\d{1,2}\/\d{1,2}(?:\/\d{2,4})?),?\s+(\d{1,2}:\d{2}(?::\d{2})?(?:\s?[apAP]\.?[mM]\.?)?)\]\s(.*)$/;
+const CL_AND=/^(\d{1,2}\/\d{1,2}(?:\/\d{2,4})?),?\s+(\d{1,2}:\d{2}(?::\d{2})?(?:\s?[apAP]\.?[mM]\.?)?)\s[-–]\s(.*)$/;
+let clMsgs=[], clPlain=false;
+
+function clParse(raw){
+  const lines=raw.replace(CL_INVIS,'').split(/\r?\n/);
+  const msgs=[]; let cur=null;
+  for(const line of lines){
+    const m=line.match(CL_IOS)||line.match(CL_AND);
+    if(m){
+      if(cur)msgs.push(cur);
+      const rest=m[3], ci=rest.indexOf(': ');
+      let sender='',text=rest;
+      if(ci>-1){sender=rest.slice(0,ci).trim();text=rest.slice(ci+2)}
+      cur={date:m[1],time:m[2],sender,text};
+    }else if(cur){cur.text+='\n'+line}
+  }
+  if(cur)msgs.push(cur);
+  msgs.forEach(x=>x.text=x.text.replace(/\s+$/,''));
+  return msgs;
+}
+function clIsSystem(m){
+  if(!m.sender)return true;
+  return CL_SYSTEM.some(p=>p.test(m.text.trim()));
+}
+function clStripIds(text){
+  return text.split('\n').filter(l=>!CL_TASKID_LINE.test(l)).map(l=>l.replace(CL_TASKID_PREFIX,'')).join('\n');
+}
+function clSenders(){
+  const sf=document.getElementById('clSenderFilter');
+  const prev=sf.value;
+  const senders=[...new Set(clMsgs.filter(m=>m.sender).map(m=>m.sender))];
+  sf.innerHTML='<option value="__ALL__">Sab log</option>'+senders.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
+  if([...sf.options].some(o=>o.value===prev))sf.value=prev;
+}
+function clRender(){
+  const g=id=>document.getElementById(id);
+  const out=g('clOutput'), st=g('clStats');
+  if(clPlain){
+    const rawLines=g('clInput').value.replace(CL_INVIS,'').split(/\r?\n/);
+    let removed=0, lines=rawLines;
+    if(g('clTaskId').checked){
+      lines=rawLines.filter(l=>{if(CL_TASKID_LINE.test(l)){removed++;return false}return true}).map(l=>l.replace(CL_TASKID_PREFIX,''));
+    }
+    let o=lines.join('\n').replace(/\n{3,}/g,'\n\n').trim();
+    if(g('clBlank').checked)o=o.split('\n').filter(l=>l.trim()).join('\n\n');
+    out.value=o;
+    st.textContent=o?`(plain text · ${removed} IDs hataye)`:'';
+    return;
+  }
+  let list=clMsgs;
+  if(g('clSystem').checked)list=list.filter(m=>!clIsSystem(m));
+  const f=g('clSenderFilter').value;
+  if(f!=='__ALL__')list=list.filter(m=>m.sender===f);
+  const sS=g('clSender').checked,sD=g('clDate').checked,sT=g('clTime').checked;
+  const o=list.map(m=>{
+    let text=g('clTaskId').checked?clStripIds(m.text):m.text;
+    let pre='';
+    const dt=[sD?m.date:null,sT?m.time:null].filter(Boolean).join(', ');
+    if(dt)pre+='['+dt+'] ';
+    if(sS&&m.sender)pre+=m.sender+': ';
+    return{full:pre+text,text};
+  }).filter(m=>m.text.trim()!=='').map(m=>m.full).join(g('clBlank').checked?'\n\n':'\n');
+  out.value=o;
+  const senders=new Set(list.filter(m=>m.sender).map(m=>m.sender));
+  st.textContent=list.length?`(${list.length} msgs · ${senders.size} senders)`:'';
+}
+function clProcess(){
+  const raw=document.getElementById('clInput').value;
+  clMsgs=clParse(raw);
+  clPlain=clMsgs.length===0&&raw.trim()!=='';
+  clSenders();clRender();
+}
+function clCopy(){
+  const o=document.getElementById('clOutput');
+  if(!o.value){toast('Pehle chat paste karo');return}
+  navigator.clipboard.writeText(o.value).then(()=>toast('Copied ✓')).catch(()=>{o.select();document.execCommand('copy');toast('Copied ✓')});
+}
+function clDownload(){
+  const o=document.getElementById('clOutput').value;
+  if(!o){toast('Output khaali hai');return}
+  dl(o,'cleaned_chat_'+today()+'.txt','text/plain');
+}
+function clClear(){
+  document.getElementById('clInput').value='';clMsgs=[];clPlain=false;clSenders();clRender();
+}
+function clToOrder(){
+  const raw=document.getElementById('clInput').value.trim();
+  const o=document.getElementById('clOutput').value.trim();
+  if(!raw&&!o){toast('Pehle chat paste karo');return}
+  // Order parser ko RAW chat do (usme sender/timestamps chahiye party detect karne ke liye)
+  document.getElementById('rawMsg').value=raw||o;
+  showTab('new',document.querySelector('nav button'));
+  parseMsg();
+}
+document.getElementById('clInput').addEventListener('input',clProcess);
+['clSender','clDate','clTime','clSystem','clBlank','clTaskId'].forEach(id=>document.getElementById(id).addEventListener('change',clRender));
+document.getElementById('clSenderFilter').addEventListener('change',clRender);
 
 /* init */
 document.getElementById('gasUrl').value=localStorage.getItem(LSG)||'';
