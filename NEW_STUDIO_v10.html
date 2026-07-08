@@ -274,7 +274,6 @@ tbody tr.row-selected:hover{background:#ddd4f5 !important;}
 <div class="tabs">
   <div class="tab active" onclick="switchTab('generate')">✦ Generate Barcodes</div>
   <div class="tab" onclick="switchTab('registry')">🗄 Registry <span id="reg-tab-count" style="background:var(--gold);color:var(--purple);border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px;"></span></div>
-  <div class="tab" onclick="switchTab('scan')">📷 Scan Stock <span id="scan-tab-count" style="background:var(--gold);color:var(--purple);border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px;"></span></div>
   <div class="tab" onclick="switchTab('box')">📦 Box Barcodes</div>
   <div class="tab" onclick="switchTab('quick')">🎯 Quick Print</div>
   <div class="tab" onclick="switchTab('custom')">🏷 Custom Sticker</div>
@@ -645,78 +644,53 @@ tbody tr.row-selected:hover{background:#ddd4f5 !important;}
 </div>
 
 <!-- ══ TAB 3: LOG ══ -->
-<!-- ══ TAB: SCAN STOCK ══ -->
-<div id="tab-scan" class="tab-panel">
-  <div class="card">
-    <div class="card-title">📷 Scan Stock Entry</div>
-    <p style="color:var(--mid);font-size:13px;margin:-6px 0 18px;">
-      Barcode scan karo ya SKU type karo, phir Qty dalo (jaise 40). Wo SKU utni baar alag-alag rows mein add ho jayega — 40 baar scan nahi karna padega.
-    </p>
-
-    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;">
-      <div style="flex:1.4;min-width:150px;">
-        <label style="display:block;font-size:11px;font-weight:600;color:var(--mid);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">📍 Rack No. (active)</label>
-        <select id="scan-rack"
-          style="width:100%;padding:11px 14px;font-size:14px;border:1.5px solid var(--border);border-radius:9px;background:#fff;font-family:'DM Mono',monospace;"></select>
-      </div>
-      <div style="flex:2;min-width:200px;">
-        <label style="display:block;font-size:11px;font-weight:600;color:var(--mid);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">SKU / Barcode</label>
-        <input id="scan-sku" type="text" placeholder="DESIGN-COLOR-SIZE — scan ya type karo"
-          autocomplete="off"
-          style="width:100%;padding:11px 14px;font-size:14px;border:1.5px solid var(--border);border-radius:9px;font-family:'DM Mono',monospace;" />
-      </div>
-      <div style="flex:1;min-width:100px;max-width:130px;">
-        <label style="display:block;font-size:11px;font-weight:600;color:var(--mid);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Qty (pcs)</label>
-        <input id="scan-qty" type="number" min="1" max="2000" value="1"
-          style="width:100%;padding:11px 14px;font-size:14px;border:1.5px solid var(--border);border-radius:9px;" />
-      </div>
-      <button class="btn-green" style="padding:11px 22px;font-size:14px;border-radius:9px;" onclick="addScanEntry()">➕ Add</button>
-    </div>
-    <div id="scan-hint" style="font-size:12px;color:var(--mid);min-height:16px;margin-bottom:8px;"></div>
-
-    <div class="table-meta">
-      <div style="display:flex;gap:8px;align-items:center;">
-        <span class="count-badge" id="scan-count-badge">0 pcs</span>
-        <span style="font-size:12px;color:var(--mid);" id="scan-sku-badge">0 SKUs</span>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <button class="btn-sm" onclick="copyScanForSheet()">📋 Copy for Sheet</button>
-        <button class="btn-sm" onclick="clearScan()">Clear All</button>
-        <button class="btn-green" style="padding:6px 14px;font-size:12px;border-radius:8px;" onclick="downloadScanExcel()">⬇ Excel</button>
-        <button class="btn-green" style="padding:6px 14px;font-size:12px;border-radius:8px;background:#1a73e8;" onclick="syncScanToSheet()">☁ Sync to Sheet</button>
-      </div>
-    </div>
-
-    <!-- Sync settings -->
-    <details id="scan-sync-box" style="margin-bottom:14px;background:var(--soft);border:1px solid var(--border);border-radius:9px;padding:4px 14px;">
-      <summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--purple);padding:8px 0;">⚙ Google Sheet Sync Setup (ek baar)</summary>
-      <div style="padding:6px 0 12px;">
-        <label style="display:block;font-size:11px;font-weight:600;color:var(--mid);margin-bottom:5px;">Apps Script Web App URL</label>
-        <input id="scan-gas-url" type="text" placeholder="https://script.google.com/macros/s/..../exec"
-          style="width:100%;padding:9px 12px;font-size:12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Mono',monospace;margin-bottom:8px;" />
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <button class="btn-sm" onclick="saveGasUrl()">💾 Save URL</button>
-          <button class="btn-sm" onclick="showGasCode()">📄 Apps Script Code dikhao</button>
-          <label style="font-size:12px;color:var(--mid);display:flex;align-items:center;gap:5px;cursor:pointer;">
-            <input type="checkbox" id="scan-autosync"> Add karte hi auto-sync karo
-          </label>
-        </div>
-        <pre id="scan-gas-code" style="display:none;white-space:pre-wrap;background:#1e1e2e;color:#cdd6f4;font-size:11px;padding:14px;border-radius:8px;margin-top:10px;font-family:'DM Mono',monospace;overflow:auto;max-height:340px;"></pre>
-      </div>
-    </details>
-
-    <div id="scan-empty" class="log-empty">Abhi koi scan nahi hua.</div>
-    <table id="scan-table" style="display:none" class="log-table">
-      <thead>
-        <tr><th>#</th><th>Date & Time</th><th>Rack No.</th><th>Design No.</th><th>Color</th><th>Size</th><th>SKU / Barcode</th><th></th></tr>
-      </thead>
-      <tbody id="scan-body"></tbody>
-    </table>
-  </div>
-</div>
-
 <!-- ══ TAB: BOX BARCODES ══ -->
 <div id="tab-box" class="tab-panel">
+
+  <!-- ── BOX NUMBER SERIES CARD ── -->
+  <div class="card" style="border:1.5px solid var(--gold);">
+    <div class="card-title">🔢 Box Number Series — BOX1, BOX2, BOX3...</div>
+    <p style="font-size:12.5px;color:var(--mid);margin:-8px 0 18px;line-height:1.6;">
+      Number likho aur us hisaab se <b>box number barcodes</b> ban jayenge.
+      Jaise From <b>1</b> To <b>20</b> = BOX1 se BOX20 tak, 20 barcodes.
+      Sirf ek chahiye to From aur To dono mein same number daal do (jaise 12 = sirf BOX12).
+      Prefix change karke <b>RAC</b> ya <b>SRI</b> series bhi bana sakte ho.
+    </p>
+    <div class="row2" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="field">
+        <label>Prefix</label>
+        <input type="text" id="bxs-prefix" value="BOX" style="text-transform:uppercase;" />
+      </div>
+      <div class="field">
+        <label>From No.</label>
+        <input type="number" id="bxs-from" value="1" min="0" max="9999" />
+      </div>
+      <div class="field">
+        <label>To No.</label>
+        <input type="number" id="bxs-to" value="20" min="0" max="9999" />
+      </div>
+    </div>
+    <div class="row2" style="margin-top:14px;">
+      <div class="field">
+        <label>Barcode Width (mm)</label>
+        <input type="number" id="bxs-w" value="150" min="60" max="190" step="5">
+      </div>
+      <div class="field">
+        <label>Barcode Height (mm)</label>
+        <input type="number" id="bxs-h" value="28" min="14" max="50" step="2">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
+      <button class="btn-primary" onclick="previewBoxSeries()">✦ Preview Series</button>
+      <button class="btn-green" onclick="downloadBoxSeriesPDF()">⬇ Download A4 PDF</button>
+    </div>
+  </div>
+
+  <div class="card" id="bxs-preview-card" style="display:none;">
+    <div class="card-title">👁 Preview — Box Number Series</div>
+    <div id="bxs-preview" style="display:flex;flex-direction:column;gap:16px;align-items:center;padding:10px 0;"></div>
+  </div>
+
   <div class="card">
     <div class="card-title">📦 Box Barcodes — Large, A4 Single Sheet</div>
     <p style="font-size:12.5px;color:var(--mid);margin:-8px 0 18px;line-height:1.6;">
@@ -758,6 +732,28 @@ tbody tr.row-selected:hover{background:#ddd4f5 !important;}
     <p style="font-size:12.5px;color:var(--mid);margin:-8px 0 18px;line-height:1.6;">
       Poori SKU list paste karo (chahe kitni bhi baar repeat ho — <strong>duplicates automatically hat jayengi</strong>, sirf unique barcode banega). System khud <strong>Design Number</strong> se group kar dega — same design ki alag-alag colors bhi ek hi page par aa jayengi. Har design apne <strong>alag A4 page</strong> par, "DESIGN NO:" header ke saath. Agar kisi design mein bohot saari sizes/colors hain to barcode size thoda chhota (auto-fit) ho jayega taaki sab ek hi page par aa jaye.
     </p>
+    <div class="field" style="margin-bottom:16px;">
+      <label>Box No. (optional — har page ke top par iska BARCODE bhi print hoga, jaise upar wale section mein)</label>
+      <input type="text" id="design-box-no" placeholder="e.g. BOX-12 / RAC45" style="text-transform:uppercase;" />
+    </div>
+    <div class="row2" style="grid-template-columns:1fr 1fr;margin-bottom:16px;">
+      <div class="field">
+        <label>📑 Grouping — Page Kaise Bane?</label>
+        <select id="design-group-mode"
+          style="border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--ink);background:var(--soft);outline:none;width:100%;">
+          <option value="design">1 Design = 1 Page (saare colors ek saath)</option>
+          <option value="designcolor">1 Design + Color = 1 Page (har color alag page)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>📂 PDF Files</label>
+        <select id="design-split-files"
+          style="border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--ink);background:var(--soft);outline:none;width:100%;">
+          <option value="single">Ek hi PDF (saare pages saath)</option>
+          <option value="split">Alag-alag PDF (har group ki apni file)</option>
+        </select>
+      </div>
+    </div>
     <div class="field" style="margin-bottom:16px;">
       <label>SKU Codes Paste Karo (duplicates chalenge, khud clean ho jayengi)</label>
       <textarea id="design-box-codes" rows="10" placeholder="5277-SKY-3XL&#10;5277-SKY-4XL&#10;5277-SKY-M&#10;5277-SKY-M&#10;MSK1400-PURPLE-M&#10;MSK1400-PURPLE-L&#10;MSK1180-OFFWHITE-M&#10;MSK1180-OFFWHITE-M&#10;..."
@@ -1023,28 +1019,30 @@ const sessionId = 'S' + Date.now().toString().slice(-6);
 const PRESET    = ['S','M','L','XL','XXL','3XL','4XL','5XL','6XL','7XL','Free'];
 
 /* -- OPERATOR (NIKALNE WALA) SYSTEM --
-   Har barcode generation pe naam record hota hai — galti trace karne ke liye. */
+   Har barcode generation pe naam record hota hai — galti trace karne ke liye.
+   Naam ab SESSION-ONLY hai: page refresh/reopen par blank ho jata hai,
+   taaki purane bande ka naam galti se registry mein na chala jaye.
+   Registry mein HAMESHA wahi naam jata hai jo ABHI box mein likha hai. */
 let operatorName = '';
-try{ operatorName = localStorage.getItem('operatorName') || ''; }catch(e){}
 function setOperator(v){
   operatorName = String(v||'').trim().toUpperCase();
-  try{ localStorage.setItem('operatorName', operatorName); }catch(e){}
   if(operatorName) toast('👤 Operator set: ' + operatorName);
 }
 function getOperator(){
-  if(operatorName) return operatorName;
+  // Hamesha live input box se padho — box khali kiya to naam bhi hat gaya
+  const inp = $('operator-input');
+  const live = inp ? String(inp.value||'').trim().toUpperCase() : '';
+  if(live){ operatorName = live; return live; }
+  operatorName = '';
   const v = prompt('👤 Barcode KAUN nikal raha hai?\nNaam likho (registry mein record hoga, galti trace karne ke liye):','');
   if(v && v.trim()){
     setOperator(v);
-    const inp = $('operator-input'); if(inp) inp.value = operatorName;
+    if(inp) inp.value = operatorName;
     return operatorName;
   }
   toast('⚠ Naam ke bina barcode generate nahi hoga!');
   return null;
 }
-document.addEventListener('DOMContentLoaded', ()=>{
-  const inp = $('operator-input'); if(inp) inp.value = operatorName;
-});
 
 /* -- CENTRAL SHEET SYNC (TEAM REGISTRY) --
    Har generation ki entry queue mein jaati hai, phir Apps Script Web App ko POST.
@@ -1188,13 +1186,12 @@ const getCopiesForSize = sz => {
 
 /* -- TABS -- */
 function switchTab(t){
-  ['generate','registry','scan','box','quick','custom','cleaner','log'].forEach((id,i)=>{
+  ['generate','registry','box','quick','custom','cleaner','log'].forEach((id,i)=>{
     $('tab-'+id).classList.toggle('active', id===t);
     document.querySelectorAll('.tab')[i].classList.toggle('active', id===t);
   });
   if(t==='log') renderLog();
   if(t==='registry') renderRegistry();
-  if(t==='scan'){ renderScan(); setTimeout(()=>$('scan-sku').focus(),50); }
 }
 
 /* -- BOX BARCODES (large, single A4 sheet) -- */
@@ -1203,6 +1200,107 @@ function boxGetCodes(){
     .map(s => s.trim().toUpperCase())
     .filter(Boolean);
 }
+/* ════════════════════════════════════════════════════════════════
+   BOX NUMBER SERIES  —  BOX1, BOX2 ... BOXn (ya RAC / SRI series)
+   ════════════════════════════════════════════════════════════════ */
+function boxSeriesCodes(){
+  const prefix = ($('bxs-prefix').value || 'BOX').trim().toUpperCase().replace(/\s+/g,'');
+  let from = parseInt($('bxs-from').value,10);
+  let to   = parseInt($('bxs-to').value,10);
+  if(isNaN(from)) from = 1;
+  if(isNaN(to))   to   = from;
+  if(from > to) [from, to] = [to, from];               // ulta likha to auto-fix
+  if(to - from + 1 > 500){ toast('⚠️ Ek baar mein max 500 barcodes'); return null; }
+  const codes = [];
+  for(let i=from; i<=to; i++) codes.push(prefix + i);
+  return codes;
+}
+
+function previewBoxSeries(){
+  const codes = boxSeriesCodes();
+  if(!codes) return;
+  if(!codes.length){ toast('⚠️ From/To number check karo'); return; }
+  const wrap = $('bxs-preview');
+  wrap.innerHTML = '';
+  const show = codes.slice(0, 30);                     // preview mein max 30 (PDF mein sab aayenge)
+  show.forEach(code => {
+    const box = document.createElement('div');
+    box.style.cssText = 'border:1.5px solid var(--border);border-radius:10px;padding:14px 18px;background:#fff;width:100%;max-width:560px;text-align:center;';
+    const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    box.appendChild(svg);
+    wrap.appendChild(box);
+    try{
+      JsBarcode(svg, code, { format:'CODE128', width:2.6, height:90, displayValue:true,
+        fontSize:20, textMargin:6, margin:8, background:'#ffffff', lineColor:'#000000', font:'monospace' });
+    }catch(e){ box.innerHTML = '<span style="color:var(--err);font-size:12px;">Invalid code: '+code+'</span>'; }
+  });
+  if(codes.length > show.length){
+    const more = document.createElement('div');
+    more.style.cssText = 'font-size:12px;color:var(--mid);font-weight:600;';
+    more.textContent = `... + ${codes.length - show.length} aur (PDF mein saare ${codes.length} aayenge)`;
+    wrap.appendChild(more);
+  }
+  $('bxs-preview-card').style.display = 'block';
+  toast('✓ '+codes.length+' box barcodes ready — '+codes[0]+' se '+codes[codes.length-1]+' tak');
+}
+
+async function downloadBoxSeriesPDF(){
+  const codes = boxSeriesCodes();
+  if(!codes || !codes.length){ toast('⚠️ From/To number check karo'); return; }
+  const op = getOperator(); if(op === null) return;
+
+  toast('⏳ '+codes.length+' barcodes ki PDF ban rahi hai...');
+  await new Promise(r => setTimeout(r, 80));
+
+  const { jsPDF } = window.jspdf;
+  const pdf   = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const pageW = 210, pageH = 297;
+  const bcW   = Math.min(190, Math.max(60, parseFloat($('bxs-w').value) || 150));
+  const bcH   = Math.min(50,  Math.max(14, parseFloat($('bxs-h').value) || 28));
+  const topM  = 14;
+  const x     = (pageW - bcW) / 2;
+
+  async function codeToPng(code){
+    const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    JsBarcode(svg, code, { format:'CODE128', width:2.6, height:90, displayValue:true,
+      fontSize:20, textMargin:6, margin:8, background:'#ffffff', lineColor:'#000000', font:'monospace' });
+    document.body.appendChild(svg);
+    const w = svg.viewBox?.baseVal?.width  || svg.getBoundingClientRect().width  || 300;
+    const h = svg.viewBox?.baseVal?.height || svg.getBoundingClientRect().height || 100;
+    let png = null;
+    try{ png = await svgToPngDataURL(svg, w, h); }catch(e){}
+    svg.remove();
+    return png;
+  }
+
+  const perPage = Math.max(1, Math.floor((pageH - topM*2 + 8) / (bcH + 8)));
+  let idx = 0;
+  while(idx < codes.length){
+    if(idx > 0 && idx % perPage === 0) pdf.addPage();
+    const onPage = idx % perPage;
+    const countThisPage = Math.min(perPage, codes.length - (Math.floor(idx/perPage))*perPage);
+    const gap = countThisPage > 1
+      ? (pageH - topM*2 - bcH*countThisPage) / (countThisPage - 1)
+      : 0;
+    const y = topM + onPage * (bcH + gap);
+    const png = await codeToPng(codes[idx]);
+    if(png) pdf.addImage(png, 'PNG', x, y, bcW, bcH);
+    idx++;
+  }
+
+  const first = codes[0], last = codes[codes.length-1];
+  pdf.save(`BoxSeries_${first}_to_${last}.pdf`);
+
+  // Print log entry (registry mein nahi — box numbers piece-SKU nahi hain)
+  const entry = { ts: nowStr(), design: first+'→'+last, color: '—', size: '—', code: first+'→'+last, copies: codes.length, session: sessionId, isReprint: false, by: op, src: 'BOX SERIES' };
+  log.unshift(entry);
+  if(log.length>1000) log = log.slice(0,1000);
+  try{ localStorage.setItem('barcodeLog', JSON.stringify(log)); }catch(e){}
+  queueForSheet([entry]);
+
+  toast(`✓ ${codes.length} box barcodes PDF download ho gayi (${first} → ${last})`);
+}
+
 function generateBoxBarcodes(){
   const codes = boxGetCodes();
   if(!codes.length){ toast('Pehle SKU codes paste karo!'); return; }
@@ -1346,34 +1444,57 @@ async function downloadBoxPDF(){
    every unique code for a design always fits on its single page.
    ════════════════════════════════════════════════════════════════ */
 function getDesignGroupedCodes(){
+  const mode = ($('design-group-mode') && $('design-group-mode').value) || 'design';
   const raw = ($('design-box-codes').value || '').split('\n')
     .map(s=>s.trim().toUpperCase()).filter(Boolean);
   const order = [];
   const groups = {};
+  const labels = {};
   raw.forEach(line=>{
     const parts = line.split('-');
     if(parts.length < 3) return;      // skip malformed / incomplete lines
     const design = parts[0];
-    if(!groups[design]){ groups[design] = []; order.push(design); }
-    if(!groups[design].includes(line)) groups[design].push(line);  // dedupe
+    const color  = parts.slice(1, parts.length-1).join('-');
+    const key    = (mode === 'designcolor') ? design + '|' + color : design;
+    if(!groups[key]){
+      groups[key] = []; order.push(key);
+      labels[key] = (mode === 'designcolor') ? design + '  ·  ' + color : design;
+    }
+    if(!groups[key].includes(line)) groups[key].push(line);  // dedupe
   });
-  return { order, groups };
+  return { order, groups, labels, mode };
 }
 
 function previewDesignBoxBarcodes(){
-  const { order, groups } = getDesignGroupedCodes();
+  const { order, groups, labels, mode } = getDesignGroupedCodes();
   if(!order.length){ toast('⚠️ Pehle SKU codes paste karo!'); return; }
+  const boxNo = ($('design-box-no').value || '').trim().toUpperCase();
   const wrap = $('design-box-preview');
   wrap.innerHTML = '';
+  if(boxNo){
+    const hdr = document.createElement('div');
+    hdr.style.cssText = 'text-align:center;width:100%;max-width:560px;padding-bottom:10px;border-bottom:2px solid var(--border);margin-bottom:-6px;';
+    const lbl = document.createElement('div');
+    lbl.style.cssText = 'font-weight:800;font-size:15px;letter-spacing:0.5px;color:var(--ink);margin-bottom:4px;';
+    lbl.textContent = 'BOX NO (har page ke top par):';
+    hdr.appendChild(lbl);
+    const bsvg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    hdr.appendChild(bsvg);
+    wrap.appendChild(hdr);
+    try{
+      JsBarcode(bsvg, boxNo, { format:'CODE128', width:2.2, height:55, displayValue:true,
+        fontSize:16, textMargin:5, margin:8, background:'#ffffff', lineColor:'#000000', font:'monospace' });
+    }catch(e){ lbl.textContent = 'BOX NO: ' + boxNo; bsvg.remove(); }
+  }
   let totalUnique = 0;
-  order.forEach(design=>{
-    const codes = groups[design];
+  order.forEach(key=>{
+    const codes = groups[key];
     totalUnique += codes.length;
     const section = document.createElement('div');
     section.style.cssText = 'width:100%;max-width:560px;';
     const hdr = document.createElement('div');
     hdr.style.cssText = 'font-weight:800;font-size:16px;color:var(--purple);text-align:center;padding:8px 0;border-bottom:2px solid var(--border);margin-bottom:10px;';
-    hdr.textContent = `DESIGN NO: ${design}  ·  ${codes.length} unique barcode${codes.length>1?'s':''} (1 page mein)`;
+    hdr.textContent = `${mode==='designcolor' ? 'DESIGN · COLOR' : 'DESIGN NO'}: ${labels[key]}  ·  ${codes.length} unique barcode${codes.length>1?'s':''} (1 page mein)`;
     section.appendChild(hdr);
     codes.forEach(code=>{
       const box = document.createElement('div');
@@ -1389,33 +1510,53 @@ function previewDesignBoxBarcodes(){
     wrap.appendChild(section);
   });
   $('design-box-preview-card').style.display = 'block';
-  toast(`✓ ${order.length} design · ${totalUnique} unique barcode preview ready`);
+  toast(`✓ ${order.length} page-group · ${totalUnique} unique barcode preview ready`);
 }
 
 async function downloadDesignBoxPDF(){
-  const { order, groups } = getDesignGroupedCodes();
+  const { order, groups, labels, mode } = getDesignGroupedCodes();
   if(!order.length){ toast('⚠️ Pehle SKU codes paste karo!'); return; }
   const op = getOperator(); if(op === null) return;
+  const split = ($('design-split-files') && $('design-split-files').value) === 'split';
+  const boxNo = ($('design-box-no').value || '').trim().toUpperCase();
 
-  toast('⏳ Design-wise A4 PDF ban rahi hai...');
+  toast('⏳ ' + (split ? order.length + ' alag PDF files' : 'A4 PDF') + ' ban rahi hai...');
   await new Promise(r => setTimeout(r, 80));
 
   const { jsPDF } = window.jspdf;
-  const pdf   = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
   const pageW = 210, pageH = 297;
   const maxW  = Math.min(190, Math.max(60, parseFloat($('design-box-w').value) || 150));
   const maxH  = Math.min(50,  Math.max(14, parseFloat($('design-box-h').value) || 28));
-  const MIN_H = 10;              // never shrink below this — keeps barcodes scannable
-  const topM  = 32;              // room reserved for the "DESIGN NO:" header
+  const MIN_H = 10;                        // never shrink below this — keeps barcodes scannable
+  const boxHdrH = boxNo ? 24 : 0;          // extra top space when Box No. barcode header is on
+  const topM  = 32 + boxHdrH;
   const x     = (pageW - maxW) / 2;
+  const hdrTitle = (mode === 'designcolor') ? 'DESIGN · COLOR: ' : 'DESIGN NO: ';
 
-  function drawDesignHeader(design, count, shrunk){
+  let boxNoPng = null;
+  if(boxNo) boxNoPng = await makeBoxNoPng(boxNo);
+
+  function drawPageHeader(pdf, label, count, shrunk){
+    let yBase = 16;
+    if(boxNo){
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(9); pdf.setTextColor(0,0,0);
+      pdf.text('BOX NO:', pageW/2, 8, { align:'center' });
+      if(boxNoPng && boxNoPng.png){
+        const bw = 58;
+        const bh = Math.min(15, bw * (boxNoPng.h / boxNoPng.w));
+        pdf.addImage(boxNoPng.png, 'PNG', (pageW - bw)/2, 10, bw, bh);
+      } else {
+        pdf.setFontSize(14);
+        pdf.text('BOX NO: ' + boxNo, pageW/2, 16, { align:'center' });
+      }
+      yBase = 16 + boxHdrH;
+    }
     pdf.setFont('helvetica','bold');
     pdf.setFontSize(18);
-    pdf.text('DESIGN NO: ' + design, pageW/2, 16, { align:'center' });
+    pdf.text(hdrTitle + label, pageW/2, yBase, { align:'center' });
     pdf.setFont('helvetica','normal');
     pdf.setFontSize(10);
-    pdf.text(count + ' unique barcode' + (count>1?'s':'') + (shrunk ? ' (size auto-fit)' : ''), pageW/2, 23, { align:'center' });
+    pdf.text(count + ' unique barcode' + (count>1?'s':'') + (shrunk ? ' (size auto-fit)' : ''), pageW/2, yBase + 7, { align:'center' });
     pdf.setDrawColor(0); pdf.setLineWidth(0.4);
     pdf.line(x, topM-4, x+maxW, topM-4);
   }
@@ -1433,10 +1574,8 @@ async function downloadDesignBoxPDF(){
     return png;
   }
 
-  let firstPage = true;
-  const warnDesigns = [];
-  for(const design of order){
-    const codes = groups[design];
+  async function renderGroupPage(pdf, key, warnDesigns){
+    const codes = groups[key];
     const n = codes.length;
     const availH = pageH - topM - 14;   // bottom margin reserved
 
@@ -1445,16 +1584,12 @@ async function downloadDesignBoxPDF(){
     if(gap < 4){
       const minGap = 4;
       bcH = n > 0 ? (availH - minGap*(n-1)) / n : maxH;
-      if(bcH < MIN_H){ bcH = MIN_H; warnDesigns.push(design); }
+      if(bcH < MIN_H){ bcH = MIN_H; warnDesigns.push(labels[key]); }
       gap = n > 1 ? (availH - bcH*n) / (n-1) : 0;
       if(gap < 0) gap = 0;
     }
     const shrunk = bcH < maxH - 0.5;
-
-    if(!firstPage) pdf.addPage();
-    firstPage = false;
-    drawDesignHeader(design, n, shrunk);
-
+    drawPageHeader(pdf, labels[key], n, shrunk);
     for(let i=0;i<n;i++){
       const png = await codeToPng(codes[i]);
       const y = topM + i*(bcH+gap);
@@ -1462,14 +1597,35 @@ async function downloadDesignBoxPDF(){
     }
   }
 
+  const warnDesigns = [];
   const dateStr = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}).replace(/ /g,'_');
-  pdf.save('DesignWiseBarcodes_'+dateStr+'.pdf');
+
+  if(split){
+    // ── Har group ki apni alag PDF file ──
+    for(const key of order){
+      const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+      await renderGroupPage(pdf, key, warnDesigns);
+      const safe = labels[key].replace(/[^A-Z0-9]+/gi,'_').replace(/^_+|_+$/g,'');
+      pdf.save('DesignWise_' + safe + '.pdf');
+      await new Promise(r => setTimeout(r, 350));   // browser ko har download ke beech thoda time
+    }
+  } else {
+    // ── Ek hi PDF, har group apne page par ──
+    const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    let firstPage = true;
+    for(const key of order){
+      if(!firstPage) pdf.addPage();
+      firstPage = false;
+      await renderGroupPage(pdf, key, warnDesigns);
+    }
+    pdf.save('DesignWiseBarcodes_'+dateStr+'.pdf');
+  }
 
   // Registry + log mein record karo (kaun, kab, kya)
   const tsD = nowStr();
   const dwEntries = [];
-  order.forEach(design => {
-    (groups[design]||[]).forEach(code => {
+  order.forEach(key => {
+    (groups[key]||[]).forEach(code => {
       const parts = code.split('-');
       const d = parts[0]||code, cl = parts[1]||'—', sz = parts.slice(2).join('-')||'—';
       const was = registryHas(code);
@@ -1483,8 +1639,10 @@ async function downloadDesignBoxPDF(){
   queueForSheet(dwEntries);
   renderRegistryCount();
 
-  let msg = `✓ ${order.length} design page(s) PDF ban gayi`;
-  if(warnDesigns.length) msg += ` · ⚠ ${warnDesigns.length} design mein barcode chhote kiye (zyada sizes the)`;
+  let msg = split
+    ? `✓ ${order.length} alag PDF files download ho gayin`
+    : `✓ ${order.length} page(s) ki PDF ban gayi`;
+  if(warnDesigns.length) msg += ` · ⚠ ${warnDesigns.length} page mein barcode chhote kiye (zyada codes the)`;
   toast(msg);
 }
 
@@ -4085,6 +4243,191 @@ function buildRackOptions(){
   sel.addEventListener('change', ()=>{ try{ localStorage.setItem('scanLastRack', sel.value); }catch(e){} });
 }
 
+/* ════════════════════════════════════════════════════════════════
+   SET BARCODE  —  1 sticker = 1 poora set
+   Code format:  SET|DESIGN|COLOR|FROM-TO
+   e.g.          SET|COT/GH5365|GRAY|M-XXL
+   Scan Stock tab mein scan hone par har size ki alag entry banti hai.
+   ════════════════════════════════════════════════════════════════ */
+function makeSetCode(design, color, from, to){
+  return 'SET|' + design.toUpperCase() + '|' + color.replace(/\s+/g,'').toUpperCase() + '|' + from.toUpperCase() + '-' + to.toUpperCase();
+}
+
+function parseSetCode(raw){
+  const s = String(raw||'').trim();
+  if(!/^SET\|/i.test(s)) return null;
+  const parts = s.split('|');
+  if(parts.length !== 4) return null;
+  const design = parts[1].trim().toUpperCase();
+  const color  = parts[2].trim().toUpperCase();
+  const range  = parts[3].trim().toUpperCase().split('-');
+  if(range.length !== 2 || !design) return null;
+  const norm = z => { z = z.trim().toUpperCase(); if(z==='2XL') z='XXL'; return z; };
+  const fi = SET_SIZES.indexOf(norm(range[0]));
+  const ti = SET_SIZES.indexOf(norm(range[1]));
+  if(fi < 0 || ti < 0) return null;
+  const [a,b] = fi <= ti ? [fi,ti] : [ti,fi];
+  return { design, color, sizes: SET_SIZES.slice(a, b+1), from: SET_SIZES[a], to: SET_SIZES[b] };
+}
+
+function initSetBcTab(){
+  const from = $('sbc-from'), to = $('sbc-to');
+  if(!from || !to || from.options.length) return;   // ek hi baar populate
+  from.innerHTML = SET_SIZES.map(s=>`<option value="${s}">${s}</option>`).join('');
+  to.innerHTML   = SET_SIZES.map(s=>`<option value="${s}">${s}</option>`).join('');
+  from.value = 'M'; to.value = 'XXL';
+  setBcPageTypeUI();
+}
+
+function setBcPageTypeUI(){
+  const wrap = $('sbc-skip-wrap');
+  if(wrap) wrap.style.display = ($('sbc-page-type').value === 'grid') ? 'block' : 'none';
+}
+
+function setBcGetInputs(){
+  const design = $('sbc-design').value.trim().toUpperCase();
+  const color  = $('sbc-color').value.trim();
+  const from   = $('sbc-from').value, to = $('sbc-to').value;
+  let qty = parseInt($('sbc-qty').value,10);
+  if(!qty || qty < 1) qty = 1;
+  if(qty > 500) qty = 500;
+  const pageType = $('sbc-page-type').value;
+  let skip = parseInt($('sbc-skip').value,10);
+  if(!skip || skip < 0) skip = 0;
+  return { design, color, from, to, qty, pageType, skip };
+}
+
+function setBcUpdateInfo(){
+  const box = $('sbc-info');
+  if(!box) return;
+  const { design, color, from, to, qty } = setBcGetInputs();
+  if(!design || !color){ box.style.display='none'; return; }
+  const code = makeSetCode(design, color, from, to);
+  const info = parseSetCode(code);
+  if(!info){ box.style.display='none'; return; }
+  const rows = info.sizes.map(s => makeCode(design, color, s));
+  box.style.display = 'block';
+  box.innerHTML =
+    `<strong style="color:var(--purple);">Barcode:</strong> <code style="font-family:'DM Mono',monospace;">${code}</code><br>` +
+    `<strong style="color:var(--purple);">1 SET = ${info.sizes.length} pcs.</strong> Scan karne par yeh ${info.sizes.length} entries banengi:<br>` +
+    rows.map(r=>`<span style="display:inline-block;background:#fff;border:1px solid var(--border);border-radius:6px;padding:2px 8px;margin:2px 4px 2px 0;font-family:'DM Mono',monospace;font-size:11.5px;">${r}</span>`).join('');
+}
+
+function setBcPreview(){
+  const { design, color, from, to, qty } = setBcGetInputs();
+  if(!design){ toast('⚠️ Design No. daalo!'); return; }
+  if(!color){ toast('⚠️ Color daalo!'); return; }
+  const code = makeSetCode(design, color, from, to);
+  const info = parseSetCode(code);
+  if(!info){ toast('⚠️ Size range galat hai'); return; }
+  setBcUpdateInfo();
+  const wrap = $('sbc-preview');
+  wrap.innerHTML = '';
+  const box = document.createElement('div');
+  box.style.cssText = 'border:1.5px solid var(--border);border-radius:10px;padding:12px 16px;background:#fff;text-align:center;max-width:100%;overflow:auto;';
+  const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  box.appendChild(svg);
+  const label = document.createElement('div');
+  label.style.cssText = 'font-size:12px;color:var(--mid);margin-top:6px;font-weight:600;';
+  label.textContent = `${design} · ${color} · ${from}→${to} (1 SET = ${info.sizes.length} pcs) — ×${qty} stickers banenge`;
+  box.appendChild(label);
+  wrap.appendChild(box);
+  try{
+    JsBarcode(svg, code, { format:'CODE128', width:1.6, height:55, displayValue:true,
+      fontSize:11, textMargin:4, margin:6, background:'#ffffff', lineColor:'#000000', font:'monospace' });
+  }catch(e){ box.innerHTML = '<span style="color:var(--err);font-size:12px;">Invalid code</span>'; }
+  $('sbc-preview-card').style.display = 'block';
+  toast(`✓ SET barcode ready — scan karne par ${info.sizes.length} entries banengi`);
+}
+
+async function setBcDownloadPDF(){
+  const { design, color, from, to, qty, pageType, skip } = setBcGetInputs();
+  if(!design){ toast('⚠️ Design No. daalo!'); return; }
+  if(!color){ toast('⚠️ Color daalo!'); return; }
+  const code = makeSetCode(design, color, from, to);
+  const info = parseSetCode(code);
+  if(!info){ toast('⚠️ Size range galat hai'); return; }
+  const op = getOperator(); if(op === null) return;
+
+  toast('⏳ SET sticker PDF ban rahi hai...');
+  await new Promise(r => setTimeout(r, 80));
+
+  const { jsPDF } = window.jspdf;
+  const png = await qpCodeToPng(code, 90);
+  const sub = `${design} · ${color} · SET ${from}-${to} (${info.sizes.length} PCS)`;
+
+  if(pageType === 'big'){
+    const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const pageW=210, pageH=297, bcW=160, bcH=32;
+    const x=(pageW-bcW)/2, y=(pageH-bcH)/2 - 10;
+    for(let i=0;i<qty;i++){
+      if(i>0) pdf.addPage();
+      if(png) pdf.addImage(png,'PNG',x,y,bcW,bcH);
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(12);
+      pdf.text(sub, pageW/2, y+bcH+10, {align:'center'});
+    }
+    pdf.save(`SET_${design.replace(/\//g,'_')}_${color}_${from}-${to}.pdf`);
+
+  } else if(pageType === 'thermal'){
+    const pdf = new jsPDF({ orientation:'landscape', unit:'mm', format:[75,50] });
+    for(let i=0;i<qty;i++){
+      if(i>0) pdf.addPage([75,50],'landscape');
+      const bcW=66, bcH=20, x=(75-bcW)/2, y=7;
+      if(png) pdf.addImage(png,'PNG',x,y,bcW,bcH);
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(8);
+      pdf.text(`SET ${from}-${to} · ${info.sizes.length} PCS`, 37.5, y+bcH+6, {align:'center'});
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(7);
+      pdf.text(`${design} · ${color}`, 37.5, y+bcH+11, {align:'center'});
+    }
+    pdf.save(`SET_Thermal_${design.replace(/\//g,'_')}_${color}_${from}-${to}.pdf`);
+
+  } else {
+    // grid — same layout as Quick Print grid, skip support ke saath
+    const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const pageW=210, pageH=297, margin=6, gap=2.5, cols=4;
+    const cardW=(pageW-margin*2-gap*(cols-1))/cols;
+    const cardH=cardW*0.43;
+    const rows=Math.floor((pageH-margin*2)/(cardH+gap));
+    const perPage=cols*rows;
+    const totalSlots = skip + qty;
+    const totalPages = Math.max(1, Math.ceil(totalSlots/perPage));
+    let placed = 0;
+    for(let pageIdx=0; pageIdx<totalPages && placed<qty; pageIdx++){
+      if(pageIdx>0) pdf.addPage();
+      for(let slot=0; slot<perPage; slot++){
+        const globalSlot = pageIdx*perPage + slot;
+        if(globalSlot < skip) continue;
+        if(placed >= qty) break;
+        const r = Math.floor(slot/cols), c = slot%cols;
+        const x = margin + c*(cardW+gap);
+        const y = margin + r*(cardH+gap);
+        pdf.setDrawColor(213,200,232); pdf.setLineWidth(0.25);
+        pdf.roundedRect(x,y,cardW,cardH,1.2,1.2,'D');
+        if(png){
+          const imgPadX=2, imgPadY=1.5, imgH=cardH*0.58;
+          pdf.addImage(png,'PNG',x+imgPadX,y+imgPadY,cardW-imgPadX*2,imgH);
+          const cx = x+cardW/2;
+          pdf.setTextColor(80,60,120); pdf.setFont('courier','bold'); pdf.setFontSize(4.5);
+          pdf.text(code, cx, y+imgH+imgPadY+3, {align:'center'});
+          pdf.setTextColor(100,60,160); pdf.setFont('helvetica','bold'); pdf.setFontSize(4.5);
+          pdf.text(sub, cx, y+imgH+imgPadY+6.5, {align:'center'});
+        }
+        placed++;
+      }
+    }
+    pdf.save(`SET_Grid_${design.replace(/\//g,'_')}_${color}_${from}-${to}.pdf`);
+  }
+
+  // Print log entry (registry mein nahi — SET code piece-SKU nahi hai)
+  const entry = { ts: nowStr(), design, color, size: `SET ${from}-${to}`, code, copies: qty, session: sessionId, isReprint: false, by: op, src: 'SET BARCODE' };
+  log.unshift(entry);
+  if(log.length>1000) log = log.slice(0,1000);
+  try{ localStorage.setItem('barcodeLog', JSON.stringify(log)); }catch(e){}
+  queueForSheet([entry]);
+
+  toast(`✓ ${qty} SET sticker PDF download ho gayi — har scan = ${info.sizes.length} entries`);
+}
+
 function parseSku(code){
   const parts = String(code).trim().split('-');
   if(parts.length >= 3){
@@ -4106,11 +4449,31 @@ function addScanEntry(){
   if(!qty || qty < 1) qty = 1;
   if(qty > 2000) qty = 2000;
 
-  const { design, color, size } = parseSku(sku);
   const now = new Date();
   const stamp = now.toLocaleDateString('en-GB') + ' ' + now.toLocaleTimeString('en-GB',{hour12:false});
-
   const fresh = [];
+
+  /* ── SET BARCODE? 1 scan = poore set ki entries ── */
+  const setInfo = parseSetCode(sku);
+  if(setInfo){
+    // Yahan qty = kitne SET scan hue. Har set × har size = 1 row.
+    for(let s=0; s<qty; s++){
+      setInfo.sizes.forEach(size => {
+        const pieceSku = makeCode(setInfo.design, setInfo.color, size);
+        const row = { ts: stamp, rack, design: setInfo.design, color: setInfo.color, size, sku: pieceSku, synced:false };
+        scanEntries.push(row); fresh.push(row);
+      });
+    }
+    saveScan();
+    $('scan-hint').innerHTML = `✅ 🎽 <strong>SET scan</strong> — ${setInfo.design} ${setInfo.color} (${setInfo.from}→${setInfo.to}) ×${qty} set → <strong>${fresh.length} entries</strong> ban gayin.`;
+    skuEl.value=''; qtyEl.value='1';
+    renderScan();
+    skuEl.focus();
+    if($('scan-autosync') && $('scan-autosync').checked){ syncScanToSheet(fresh); }
+    return;
+  }
+
+  const { design, color, size } = parseSku(sku);
   for(let i=0;i<qty;i++){
     const row = { ts: stamp, rack, design, color, size, sku, synced:false };
     scanEntries.push(row); fresh.push(row);
@@ -4958,15 +5321,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('inp-color').addEventListener('keydown', e=>{ if(e.key==='Enter') addColor(); });
   $('inp-design').addEventListener('input', updateComboPreview);
   $('inp-design').addEventListener('keydown', e=>{ if(e.key==='Enter') addProduct(); });
-  // Scan tab: barcode gun sends Enter after scan → jump to qty; Enter on qty → add
-  const ssku=$('scan-sku'), sqty=$('scan-qty');
-  if(ssku) ssku.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); sqty.focus(); sqty.select(); } });
-  if(sqty) sqty.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addScanEntry(); } });
   initSetSelects();
   initQuickPrintSizes();
   qpUpdatePageTypeUI();
   initCustomSticker();
-  renderScan();
   renderRegistryCount();
 });
 </script>
