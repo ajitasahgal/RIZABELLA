@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RIZABELLA · Fabric Code Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
+<style>
+:root{
+  --ivory:#FAF8F4;
+  --card:#FFFFFF;
+  --charcoal:#2B2A28;
+  --soft:#6E6A63;
+  --gold:#B99256;
+  --gold-deep:#9A7940;
+  --gold-tint:#F4ECDD;
+  --sage:#8FA08A;
+  --rose:#C99A96;
+  --line:#E8E2D6;
+  --danger:#B0564E;
+  --radius:12px;
+  --shadow:0 6px 24px rgba(43,42,40,.07);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Jost',sans-serif;
+  background:var(--ivory);
+  color:var(--charcoal);
+  min-height:100vh;
+  font-size:15px;
+  letter-spacing:.01em;
+}
+/* ---------- HEADER ---------- */
+header{
+  background:linear-gradient(180deg,#FFFFFF 0%,#FCFAF6 100%);
+  border-bottom:1px solid var(--line);
+  padding:22px 34px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:50;
+}
+.brand{display:flex;align-items:center;gap:16px}
+.brand-mark{
+  width:46px;height:46px;border:1.5px solid var(--gold);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;color:var(--gold-deep);
+  border-radius:50%;
+}
+.brand h1{
+  font-family:'Cormorant Garamond',serif;
+  font-size:26px;font-weight:600;letter-spacing:.32em;text-transform:uppercase;
+}
+.brand small{display:block;font-family:'Jost';font-size:11px;letter-spacing:.35em;color:var(--gold-deep);text-transform:uppercase;font-weight:500;margin-top:2px}
+.user-chip{
+  display:flex;align-items:center;gap:10px;
+  background:var(--gold-tint);border:1px solid #E9DCC2;
+  padding:8px 16px;border-radius:30px;font-size:13px;font-weight:500;
+}
+.user-chip .dot{width:8px;height:8px;border-radius:50%;background:var(--sage)}
+.user-chip b{letter-spacing:.08em}
+.user-chip span.role{color:var(--soft);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+
+/* ---------- LAYOUT ---------- */
+main{max-width:1180px;margin:0 auto;padding:36px 28px 80px}
+.grid{display:grid;grid-template-columns:400px 1fr;gap:28px;align-items:start}
+@media(max-width:920px){.grid{grid-template-columns:1fr}}
+.card{
+  background:var(--card);border:1px solid var(--line);
+  border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:28px;
+}
+.card h2{
+  font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;
+  margin-bottom:4px;letter-spacing:.04em;
+}
+.card .sub{font-size:12.5px;color:var(--soft);margin-bottom:22px;letter-spacing:.03em}
+.eyebrow{font-size:10.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold-deep);font-weight:600;margin-bottom:6px}
+
+/* ---------- FORM ---------- */
+label{display:block;font-size:11.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);margin:0 0 7px}
+select,input[type=text]{
+  width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:9px;
+  font-family:'Jost';font-size:14.5px;color:var(--charcoal);background:#FFFDF9;
+  outline:none;transition:border .18s, box-shadow .18s;appearance:none;
+}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23B99256' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+select:focus,input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(185,146,86,.14)}
+.field{margin-bottom:18px}
+.inline-add{display:flex;gap:8px;margin-top:8px}
+.inline-add input{flex:1}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 22px;border-radius:9px;border:none;cursor:pointer;
+  font-family:'Jost';font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  transition:transform .15s, box-shadow .15s, background .15s;
+}
+.btn-gold{background:var(--gold);color:#fff;width:100%;padding:15px}
+.btn-gold:hover{background:var(--gold-deep);box-shadow:0 6px 18px rgba(154,121,64,.3)}
+.btn-ghost{background:transparent;border:1px solid var(--line);color:var(--soft);padding:11px 16px}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold-deep)}
+.btn-mini{padding:7px 12px;font-size:11px;border-radius:7px}
+.btn:active{transform:scale(.98)}
+
+/* ---------- RESULT ---------- */
+.result{
+  margin-top:22px;border:1.5px dashed var(--gold);border-radius:var(--radius);
+  background:linear-gradient(135deg,#FFFDF8,#FBF5E9);
+  padding:24px;text-align:center;display:none;animation:fadeUp .4s ease;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.result .code{
+  font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:700;
+  letter-spacing:.12em;color:var(--charcoal);margin:6px 0 4px;
+}
+.result .meta{font-size:12.5px;color:var(--soft);letter-spacing:.05em}
+.result .tag{
+  display:inline-block;margin-top:6px;font-size:10.5px;font-weight:600;
+  letter-spacing:.2em;text-transform:uppercase;padding:4px 12px;border-radius:20px;
+}
+.tag-new{background:#EEF3EC;color:#5C7256}
+.tag-dup{background:#F7ECEB;color:var(--danger)}
+.result .actions{display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+
+/* ---------- REGISTRY ---------- */
+.registry-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:18px}
+.registry-head .tools{display:flex;gap:10px;flex-wrap:wrap}
+.search-box{position:relative}
+.search-box input{width:240px;padding-left:36px}
+.search-box svg{position:absolute;left:12px;top:50%;transform:translateY(-50%)}
+.count-pill{font-size:12px;color:var(--soft);letter-spacing:.05em;background:var(--gold-tint);padding:5px 13px;border-radius:20px;border:1px solid #EBDFC7}
+table{width:100%;border-collapse:collapse}
+thead th{
+  text-align:left;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--gold-deep);font-weight:600;padding:12px 14px;border-bottom:1.5px solid var(--line);
+}
+tbody td{padding:13px 14px;border-bottom:1px solid #F1ECE1;font-size:14px;vertical-align:middle}
+tbody tr{transition:background .15s}
+tbody tr:hover{background:#FCF9F2}
+.code-cell{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:16.5px;letter-spacing:.08em}
+.swatch{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:8px;border:1px solid rgba(0,0,0,.12);vertical-align:-1px}
+.row-actions{display:flex;gap:6px;justify-content:flex-end}
+.icon-btn{
+  border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 9px;
+  cursor:pointer;color:var(--soft);transition:all .15s;font-size:12px;
+}
+.icon-btn:hover{border-color:var(--gold);color:var(--gold-deep)}
+.icon-btn.danger:hover{border-color:var(--danger);color:var(--danger)}
+.empty-state{text-align:center;padding:54px 20px;color:var(--soft)}
+.empty-state .es-icon{font-family:'Cormorant Garamond',serif;font-size:40px;color:var(--gold);margin-bottom:8px}
+.empty-state p{font-size:13.5px;letter-spacing:.04em}
+
+/* toast */
+.toast{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(70px);
+  background:var(--charcoal);color:#FAF8F4;padding:12px 24px;border-radius:30px;
+  font-size:13px;letter-spacing:.06em;opacity:0;transition:all .3s ease;z-index:99;
+  box-shadow:0 8px 24px rgba(0,0,0,.25);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---------- PRINT STICKERS (A5 LANDSCAPE, 1 sticker = 1 poora page) ---------- */
+#printArea{display:none}
+@media print{
+  body > :not(#printArea){display:none !important}
+  #printArea{display:block !important;position:absolute;top:0;left:0}
+  @page{size:A5 landscape;margin:0}
+  .pl-page{
+    width:210mm;height:148mm;display:flex;align-items:center;justify-content:center;
+    page-break-after:always;font-family:'Cormorant Garamond',serif;background:#fff;
+  }
+  .pl-page:last-child{page-break-after:auto}
+  .pl-frame{
+    border:2px solid #B99256;width:190mm;height:128mm;text-align:center;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2mm;
+  }
+  .pl-brand{font-size:15pt;letter-spacing:.45em;font-weight:600;color:#2B2A28}
+  .pl-rule{width:26mm;height:.5mm;background:#B99256;margin:1mm auto 2mm}
+  .pl-code{font-size:30pt;font-weight:700;letter-spacing:.08em;color:#2B2A28}
+  .pl-barcode svg{width:160mm;height:42mm}
+  .pl-meta{font-family:'Jost',sans-serif;font-size:13pt;letter-spacing:.12em;color:#555}
+  .pl-date{font-family:'Jost',sans-serif;font-size:9pt;letter-spacing:.24em;color:#999;text-transform:uppercase;margin-top:2mm}
+}
+/* ---------- BULK CARD & BARCODE PREVIEW ---------- */
+.card-wide{margin-top:28px}
+textarea{
+  width:100%;min-height:96px;padding:12px 14px;border:1px solid var(--line);border-radius:9px;
+  font-family:'Jost';font-size:14.5px;color:var(--charcoal);background:#FFFDF9;outline:none;resize:vertical;
+  transition:border .18s, box-shadow .18s;letter-spacing:.05em;
+}
+textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(185,146,86,.14)}
+.bulk-grid{display:grid;grid-template-columns:1fr 150px;gap:18px}
+@media(max-width:700px){.bulk-grid{grid-template-columns:1fr}}
+.bulk-preview{
+  margin-top:16px;background:#FCF9F2;border:1px solid var(--line);border-radius:10px;
+  padding:14px 16px;font-size:13.5px;display:none;
+}
+.bulk-preview .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{
+  font-size:12px;font-weight:500;letter-spacing:.06em;padding:5px 12px;border-radius:20px;
+  background:#EEF3EC;color:#4E6448;border:1px solid #D9E4D5;
+}
+.chip.exists{background:var(--gold-tint);color:var(--gold-deep);border-color:#E9DCC2}
+.chip.bad{background:#F7ECEB;color:var(--danger);border-color:#EAD3D0}
+.chips-box{
+  margin-top:12px;background:#FCF9F2;border:1px dashed var(--line);border-radius:10px;
+  padding:12px 14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+}
+.sel-chip{
+  display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:500;
+  letter-spacing:.06em;padding:6px 8px 6px 12px;border-radius:20px;
+  background:#fff;border:1px solid var(--line);color:var(--charcoal);
+}
+.sel-chip .x{
+  cursor:pointer;width:18px;height:18px;border-radius:50%;display:inline-flex;
+  align-items:center;justify-content:center;font-size:11px;color:var(--soft);
+  background:var(--ivory);border:1px solid var(--line);transition:all .15s;line-height:1;
+}
+.sel-chip .x:hover{background:#F7ECEB;color:var(--danger);border-color:#EAD3D0}
+.clear-chips{font-size:11px;color:var(--soft);cursor:pointer;letter-spacing:.08em;text-decoration:underline;margin-left:auto}
+.clear-chips:hover{color:var(--danger)}
+.detail-input-row{display:grid;grid-template-columns:110px 1.2fr 1.2fr 110px 80px 130px;gap:12px;align-items:end}
+@media(max-width:900px){.detail-input-row{grid-template-columns:1fr 1fr;}}
+.mtr-cell{font-weight:600;color:var(--gold-deep)}
+.bulk-actions{display:flex;gap:12px;margin-top:18px;flex-wrap:wrap}
+.res-barcode{margin-top:14px}
+.res-barcode svg{max-width:100%;height:64px}
+footer{text-align:center;padding:26px;color:#B7B0A3;font-size:11.5px;letter-spacing:.24em;text-transform:uppercase}
+@media(max-width:600px){
+  header{padding:16px 18px;flex-direction:column;gap:12px}
+  main{padding:22px 14px 60px}
+  .search-box input{width:100%}
+  .registry-head{flex-direction:column;align-items:stretch}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark">R</div>
+    <div>
+      <h1>Rizabella</h1>
+      <small>Fabric Code Generator</small>
+    </div>
+  </div>
+  <div class="user-chip">
+    <span class="dot"></span>
+    <b>AJITA</b>
+    <span class="role">Master Admin</span>
+  </div>
+</header>
+
+<main>
+<div class="grid">
+
+  <!-- ====== GENERATOR CARD ====== -->
+  <div class="card">
+    <div class="eyebrow">Production Dept.</div>
+    <h2>Generate Fabric Code</h2>
+    <div class="sub">Fabric code likho + fabric & colour select karo — code turant ready (e.g. F101-CHIFFON-SILVER).</div>
+
+    <div class="field">
+      <label for="fabricCode">Fabric Code <span style="color:var(--gold-deep)">(uniqueness ke liye — sabse pehle aayega)</span></label>
+      <input type="text" id="fabricCode" placeholder="e.g. F101, RB22 (auto CAPS)" style="text-transform:uppercase">
+    </div>
+
+    <div class="field">
+      <label for="fabricSel">Fabric Name</label>
+      <select id="fabricSel"></select>
+      <div class="inline-add">
+        <input type="text" id="newFabric" placeholder="Naya fabric add karo…">
+        <button class="btn btn-ghost btn-mini" onclick="addFabric()">+ Add</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="colorSel">Colour <span style="color:var(--gold-deep)">(canonical spelling only)</span></label>
+      <select id="colorSel"></select>
+      <div class="inline-add">
+        <input type="text" id="newColor" placeholder="Naya colour add karo… (auto CAPS)">
+        <input type="color" id="newColorHex" value="#B99256" title="Swatch colour choose karo" style="width:46px;height:44px;padding:4px;border:1px solid var(--line);border-radius:9px;background:#FFFDF9;cursor:pointer">
+        <button class="btn btn-ghost btn-mini" onclick="addColor()">+ Add</button>
+      </div>
+      <div id="colorGuess" style="display:none;margin-top:9px;font-size:12.5px;color:var(--soft);background:var(--gold-tint);border:1px solid #EBDFC7;border-radius:8px;padding:8px 12px;letter-spacing:.04em"></div>
+    </div>
+
+    <button class="btn btn-gold" onclick="generateCode()">Generate Code</button>
+
+    <div class="result" id="resultBox">
+      <div class="eyebrow" id="resFabricColor"></div>
+      <div class="code" id="resCode"></div>
+      <div class="res-barcode"><svg id="resBarcode"></svg></div>
+      <div class="meta" id="resMeta"></div>
+      <div><span class="tag" id="resTag"></span></div>
+      <div class="actions">
+        <button class="btn btn-ghost btn-mini" onclick="copyText(lastCode)">⧉ Copy Code</button>
+        <button class="btn btn-ghost btn-mini" onclick="printLabel(lastEntry)">🖨 Print Label (A5)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== REGISTRY CARD ====== -->
+  <div class="card">
+    <div class="registry-head">
+      <div>
+        <div class="eyebrow">Central Record</div>
+        <h2>Code Registry</h2>
+      </div>
+      <div class="tools">
+        <span class="count-pill" id="countPill">0 codes</span>
+        <div class="search-box">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="7" stroke="#B99256" stroke-width="2"/><path d="M16 16l5 5" stroke="#B99256" stroke-width="2" stroke-linecap="round"/></svg>
+          <input type="text" id="searchInput" placeholder="Search code / fabric / colour" oninput="renderRegistry()">
+        </div>
+        <button class="btn btn-ghost btn-mini" onclick="exportCSV()">⬇ Export CSV</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr><th>Code</th><th>Fabric</th><th>Colour</th><th>Date</th><th>By</th><th style="text-align:right">Actions</th></tr>
+        </thead>
+        <tbody id="registryBody"></tbody>
+      </table>
+    </div>
+    <div class="empty-state" id="emptyState">
+      <div class="es-icon">❦</div>
+      <p>Abhi tak koi code generate nahi hua.<br>Left panel se pehla fabric code banao.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ====== BULK BARCODE CARD ====== -->
+<div class="card card-wide">
+  <div class="eyebrow">Bulk Printing</div>
+  <h2>Bulk Barcode Stickers — A5</h2>
+  <div class="sub">Fabric code + fabric + kai colours + copies set karo — har code ki har copy apna poora A5 page (210×148mm landscape) pe bada barcode ke saath.</div>
+
+  <div class="bulk-grid">
+    <div>
+      <div class="field">
+        <label for="bulkFabricCode">Fabric Code <span style="color:var(--gold-deep)">(sabse pehle aayega)</span></label>
+        <input type="text" id="bulkFabricCode" placeholder="e.g. F101, RB22 (auto CAPS)" style="text-transform:uppercase" oninput="updateBulkPreview()">
+      </div>
+      <div class="field">
+        <label for="bulkFabric">Fabric Name</label>
+        <select id="bulkFabric" onchange="updateBulkPreview()"></select>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>Colours — dropdown se select karo (typing nahi)</label>
+        <div class="inline-add" style="margin-top:0">
+          <select id="bulkColorSel" style="flex:1"></select>
+          <button class="btn btn-ghost btn-mini" onclick="bulkInsertColor()">＋ Select</button>
+        </div>
+        <div id="bulkChips" class="chips-box" style="display:none"></div>
+
+        <label style="margin-top:16px">Colour Mixer — palette se naya colour banao (naam auto-detect)</label>
+        <div class="inline-add" style="margin-top:0">
+          <input type="color" id="bulkMixHex" value="#B99256" title="Palette se colour choose karo" style="width:46px;height:44px;padding:4px;border:1px solid var(--line);border-radius:9px;background:#FFFDF9;cursor:pointer">
+          <input type="text" id="bulkMixName" placeholder="Palette se pick karo — naam yahan aayega (auto CAPS)">
+          <button class="btn btn-ghost btn-mini" onclick="bulkMixAdd()">+ Add & Select</button>
+        </div>
+        <div id="bulkMixGuess" style="display:none;margin-top:9px;font-size:12.5px;color:var(--soft);background:var(--gold-tint);border:1px solid #EBDFC7;border-radius:8px;padding:8px 12px;letter-spacing:.04em"></div>
+      </div>
+    </div>
+    <div>
+      <div class="field">
+        <label for="bulkCopies">Har Colour Ki Copies</label>
+        <input type="text" id="bulkCopies" value="1" inputmode="numeric" oninput="updateBulkPreview()">
+      </div>
+    </div>
+  </div>
+
+  <div class="bulk-preview" id="bulkPreview"></div>
+
+  <div class="bulk-actions">
+    <button class="btn btn-gold" style="width:auto" onclick="bulkPrint()">🖨 A5 PDF — 1 Sticker = 1 Poora Page</button>
+    <button class="btn btn-ghost" onclick="bulkAdd()">＋ Codes Registry Me Add Karo</button>
+  </div>
+  <div style="margin-top:14px;font-size:12px;color:var(--soft);letter-spacing:.03em">
+    Print dialog me <b>"Save as PDF"</b> choose karo, paper size <b>A5</b>, scale <b>100%</b> — bas. Codes automatic registry me add ho jate hain (duplicate combination ka wahi purana code use hoga).
+  </div>
+</div>
+
+<!-- ====== DETAILS-WISE BULK CARD ====== -->
+<div class="card card-wide">
+  <div class="eyebrow">Details-Wise Bulk</div>
+  <h2>Details-Wise A5 PDF — Har Row Ka Alag Code</h2>
+  <div class="sub">Har row me alag fabric code + fabric + colour + meters — jaise aapki sheet me hai (RZ2 · COTTONASTAR · CREAM · 145.00). Sab rows ka ek saath multi-page A5 PDF.</div>
+
+  <div class="detail-input-row">
+    <div>
+      <label>Fabric Code</label>
+      <input type="text" id="dFcode" placeholder="RZ2" style="text-transform:uppercase">
+    </div>
+    <div>
+      <label>Fabric</label>
+      <select id="dFabric"></select>
+    </div>
+    <div>
+      <label>Colour</label>
+      <select id="dColor"></select>
+    </div>
+    <div>
+      <label>Meters (optional)</label>
+      <input type="text" id="dMeters" placeholder="145.00" inputmode="decimal">
+    </div>
+    <div>
+      <label>Copies</label>
+      <input type="text" id="dCopies" value="1" inputmode="numeric">
+    </div>
+    <div style="display:flex;align-items:flex-end">
+      <button class="btn btn-ghost" style="width:100%;padding:12px" onclick="detailAddRow()">＋ Row Add</button>
+    </div>
+  </div>
+
+  <div class="field" style="margin-top:18px;margin-bottom:0">
+    <label>Ya Excel/Sheet se seedha paste karo — columns: Code &nbsp;|&nbsp; Fabric &nbsp;|&nbsp; Colour &nbsp;|&nbsp; Meters</label>
+    <textarea id="dPaste" placeholder="RZ2&#9;COTTONASTAR&#9;CREAM&#9;145.00&#10;RZ3&#9;COTTONASTAR&#9;GREEN&#9;24.00" style="min-height:80px"></textarea>
+    <div style="display:flex;gap:10px;margin-top:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-mini" onclick="detailParsePaste()">⇣ Paste Se Rows Banao</button>
+      <span style="font-size:11.5px;color:var(--soft)">Naya fabric automatic list me add ho jayega · invalid colour red me dikhega</span>
+    </div>
+    <div id="dPasteErrors" style="display:none;margin-top:10px;font-size:12.5px;color:var(--danger);background:#F7ECEB;border:1px solid #EAD3D0;border-radius:8px;padding:10px 14px"></div>
+  </div>
+
+  <div id="dRowsWrap" style="display:none;margin-top:20px;overflow-x:auto">
+    <table>
+      <thead><tr><th>#</th><th>Code Banega</th><th>Fabric</th><th>Colour</th><th>Meters</th><th>Copies</th><th style="text-align:right">Remove</th></tr></thead>
+      <tbody id="dRowsBody"></tbody>
+    </table>
+    <div style="margin-top:12px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <span class="count-pill" id="dCountPill"></span>
+      <span class="clear-chips" onclick="detailClear()">Clear all rows</span>
+    </div>
+  </div>
+
+  <div class="bulk-actions">
+    <button class="btn btn-gold" style="width:auto" onclick="detailPrint()">🖨 A5 PDF — Sab Rows Details Ke Saath</button>
+    <button class="btn btn-ghost" onclick="detailAdd()">＋ Sirf Registry Me Add Karo</button>
+  </div>
+</div>
+</main>
+
+<footer>
+  Rizabella · Internal Production Tool · 2026
+  <div style="margin-top:8px;font-family:'Cormorant Garamond',serif;font-size:14px;letter-spacing:.18em;text-transform:none;color:var(--gold-deep)">Created by <b>Ajita Sahgal</b></div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<!-- A5 sticker pages (dynamic) -->
+<div id="printArea"></div>
+
+<script>
+/* ============ CONFIG (pre-baked, zero setup) ============ */
+const USER = "AJITA";
+const FULL_NAME = "AJITA SAHGAL";
+
+const DEFAULT_FABRICS = ["COTTON","LINEN","SILK","GEORGETTE","CHIFFON","RAYON","CREPE","SATIN","VELVET","ORGANZA","DENIM","MUSLIN","MODAL","VISCOSE","NET","TISSUE","CHANDERI","BANARASI","KHADI","LYCRA","MULMUL","CAMBRIC","POPLIN","VOILE","JACQUARD","BROCADE","TAFFETA","TUSSAR","KOTA","MAHESHWARI","SANTOON","ORGANDY","GAJJI","MASHRU","TERRYCOT","POLYESTER","NYLON","WOOL","PASHMINA","FLANNEL","CORDUROY","HOSIERY","SPANDEX","CRUSH","SHIMMER"];
+
+/* Canonical colour list — CAPS, no gaps, spellings locked */
+const CANONICAL_COLORS = [
+ /* Whites & Neutrals */
+ ["WHITE","#FFFFFF"],["OFFWHITE","#F5F1E6"],["IVORY","#FFFFF0"],["CREAM","#F3E5C0"],
+ ["BEIGE","#D9C7A7"],["SKIN","#E8C9A8"],["GOLD","#C9A24B"],["SILVER","#C0C0C0"],
+ ["GREY","#8A8A8A"],["CHARCOAL","#3B3B3B"],["BLACK","#1E1E1E"],
+ /* Reds & Pinks */
+ ["RED","#C0392B"],["MAROON","#6E1F2B"],["WINE","#722F37"],["CHERRY","#9A1F40"],
+ ["RANI","#D81B60"],["PINK","#E8A0BF"],["BABYPINK","#F4C6D7"],["HOTPINK","#E0218A"],
+ ["ONIONPINK","#C88A98"],["PEACH","#F6C6AD"],["CORAL","#F08070"],
+ /* Oranges & Yellows */
+ ["ORANGE","#E67E22"],["RUST","#B7410E"],["BRICK","#A0402A"],["MUSTARD","#D4A017"],
+ ["YELLOW","#F1C40F"],["LEMON","#F7E96B"],["HALDI","#E3B505"],
+ /* Greens */
+ ["GREEN","#2E7D32"],["BOTTLEGREEN","#1B4D3E"],["OLIVE","#708238"],["MEHENDI","#7A7A2F"],
+ ["SEAGREEN","#54A38E"],["MINT","#A8D5BA"],["PISTA","#B4CFA4"],["TEAL","#0F6E6E"],
+ ["RAMA","#0E7C6B"],["PEACOCK","#0B6E7F"],
+ /* Blues */
+ ["BLUE","#2456A6"],["NAVYBLUE","#1B2A4A"],["SKYBLUE","#8CC1E0"],["ROYALBLUE","#2547C9"],
+ ["TURQUOISE","#40C4C4"],["FIROZI","#3AB0BF"],["INK","#1C2440"],
+ /* Purples */
+ ["PURPLE","#6A3AA0"],["LAVENDER","#C3AED6"],["VIOLET","#7F00FF"],["MAGENTA","#C2187C"],
+ ["PLUM","#7D4A64"],["MAUVE","#B78BA6"],
+ /* Browns */
+ ["BROWN","#6F4E37"],["COFFEE","#4B3621"],["CHOCOLATE","#5C3A21"],["TAN","#C89A6B"],
+ ["COPPER","#B87333"],
+ /* Special */
+ ["MULTI","#B99256"]
+];
+
+/* Abbreviation overrides so codes stay clean & unique */
+const COLOR_ABBR = {
+ "OFFWHITE":"OFW","BABYPINK":"BPK","HOTPINK":"HPK","ONIONPINK":"ONP","BOTTLEGREEN":"BGR",
+ "SEAGREEN":"SGR","NAVYBLUE":"NVB","SKYBLUE":"SKB","ROYALBLUE":"RYB","MULTI":"MLT",
+ "MAROON":"MRN","MUSTARD":"MST","MAGENTA":"MGT","CHARCOAL":"CHR","TURQUOISE":"TRQ",
+ "LAVENDER":"LVN","GREY":"GRY","PEACOCK":"PCK","CHOCOLATE":"CHO","MEHENDI":"MHD",
+ "FIROZI":"FRZ","CHERRY":"CHY","COPPER":"CPR","CORAL":"CRL"
+};
+
+/* Fabric abbreviation overrides (clash-free codes) */
+const FABRIC_ABBR = { "ORGANDY":"OGD", "GEORGETTE":"GGT" };
+
+/* ===== Named palette for auto colour-name detection (hex → naam) ===== */
+const NAMED_PALETTE = [
+ ["SNOW","#FFFAFA"],["PEARL","#EAE0C8"],["EGGSHELL","#F0EAD6"],["VANILLA","#F3E5AB"],
+ ["CHAMPAGNE","#F7E7CE"],["SAND","#C2B280"],["KHAKI","#C3B091"],["CAMEL","#C19A6B"],
+ ["FAWN","#E5AA70"],["APRICOT","#FBCEB1"],["SALMON","#FA8072"],["ROSE","#DE5D83"],
+ ["BLUSH","#DEB0AB"],["FUCHSIA","#D5006D"],["CRIMSON","#B22234"],["SCARLET","#CE2029"],
+ ["TOMATO","#E45B44"],["VERMILION","#D9381E"],["BURGUNDY","#5C1A2E"],["OXBLOOD","#4A0E12"],
+ ["TANGERINE","#F28500"],["AMBER","#E0A526"],["HONEY","#D9A441"],["OCHRE","#CC7722"],
+ ["CARAMEL","#B5651D"],["CINNAMON","#8B4E2E"],["TERRACOTTA","#B4552D"],["MAHOGANY","#5A2A20"],
+ ["WALNUT","#5D432C"],["ESPRESSO","#3C2415"],["TAUPE","#8B8378"],["MOCHA","#7B5B45"],
+ ["LIME","#9CCC3C"],["CHARTREUSE","#B2C248"],["FERN","#588157"],["FOREST","#22492F"],
+ ["EMERALD","#1F8A5B"],["JADE","#2BAF74"],["SAGE","#9CAF88"],["MOSS","#6E7F4D"],
+ ["AQUA","#66D1CB"],["CYAN","#3AC8D8"],["AZURE","#4A90D9"],["COBALT","#1F4FA3"],
+ ["SAPPHIRE","#173E8C"],["INDIGO","#3F3F8F"],["DENIMBLUE","#3B5B8C"],["STEELBLUE","#5577A0"],
+ ["POWDERBLUE","#B0CFDE"],["PERIWINKLE","#B3B7E0"],["LILAC","#C8A2C8"],["ORCHID","#C069C0"],
+ ["AMETHYST","#8F5FB0"],["GRAPE","#5E2F6E"],["EGGPLANT","#4B2A45"],["ONION","#9A7B8F"],
+ ["SLATE","#6A7280"],["ASH","#B2AFA6"],["SMOKE","#847F78"],["GUNMETAL","#4A4F55"],
+ ["MIDNIGHT","#151B2E"],["JETBLACK","#0F0F0F"]
+];
+
+function hexToRgb(h){
+  h=h.replace("#","");
+  return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];
+}
+/* Perceptual-weighted distance — hex se sabse najdeeki naam */
+function nearestColorName(hex){
+  const [r,g,b]=hexToRgb(hex);
+  let best=null,bestD=Infinity,exact=false;
+  const pool=[...allColors(),...NAMED_PALETTE];
+  for(const [name,h] of pool){
+    const [r2,g2,b2]=hexToRgb(h);
+    const d=2*(r-r2)**2 + 4*(g-g2)**2 + 3*(b-b2)**2;
+    if(d<bestD){bestD=d;best=name;exact=(d===0)}
+  }
+  return {name:best,exact,inList:allColors().some(c=>c[0]===best)};
+}
+
+/* ============ STORAGE (localStorage + memory fallback) ============ */
+let memStore = {};
+const store = {
+  get(k){ try{ return localStorage.getItem(k) }catch(e){ return memStore[k]||null } },
+  set(k,v){ try{ localStorage.setItem(k,v) }catch(e){ memStore[k]=v } }
+};
+
+let registry = JSON.parse(store.get("rz_registry")||"[]");
+let fabrics  = JSON.parse(store.get("rz_fabrics")||"null") || [...DEFAULT_FABRICS];
+let customColors = JSON.parse(store.get("rz_colors")||"[]"); /* [["NAME","#hex"],...] */
+/* Migrate old saved data to CAPS / no-gap format */
+fabrics = [...new Set([...fabrics.map(f=>f.toUpperCase().trim()), ...DEFAULT_FABRICS])];
+customColors = customColors.map(c=>[c[0].toUpperCase().replace(/[^A-Z]/g,""), c[1]]);
+registry = registry.map(r=>({...r, code:r.code.replace(/^RZ-/,""), fabric:r.fabric.toUpperCase().trim(), color:r.color.toUpperCase().replace(/\s+/g,"")}));
+let lastCode = "", lastEntry = null;
+
+function allColors(){
+  const names=new Set(CANONICAL_COLORS.map(c=>c[0]));
+  return [...CANONICAL_COLORS, ...customColors.filter(c=>!names.has(c[0]))];
+}
+
+function save(){
+  store.set("rz_registry", JSON.stringify(registry));
+  store.set("rz_fabrics", JSON.stringify(fabrics));
+  store.set("rz_colors", JSON.stringify(customColors));
+}
+
+/* ============ HELPERS ============ */
+function abbr(name, isColor){
+  if(isColor && COLOR_ABBR[name]) return COLOR_ABBR[name];
+  if(!isColor && FABRIC_ABBR[name]) return FABRIC_ABBR[name];
+  const words = name.trim().toUpperCase().split(/\s+/);
+  if(words.length >= 2) return (words[0][0]+words[1][0]+(words[1][1]||words[0][1]||"X")).slice(0,3);
+  return words[0].replace(/[^A-Z]/g,"").padEnd(3,"X").slice(0,3);
+}
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("show");
+  clearTimeout(t._tm); t._tm=setTimeout(()=>t.classList.remove("show"),2200);
+}
+function copyText(txt){
+  if(!txt) return;
+  const done=()=>toast("Copied: "+txt);
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(()=>fallbackCopy(txt,done))}
+  else fallbackCopy(txt,done);
+}
+function fallbackCopy(txt,cb){
+  const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);
+  ta.select();document.execCommand("copy");document.body.removeChild(ta);cb();
+}
+function fmtDate(iso){
+  const d=new Date(iso);
+  return d.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});
+}
+
+/* ============ DROPDOWNS ============ */
+function fillFabrics(){
+  const opts=fabrics.sort((a,b)=>a.localeCompare(b)).map(f=>`<option>${f}</option>`).join("");
+  const sel=document.getElementById("fabricSel"); const prev=sel.value;
+  sel.innerHTML=opts; if(prev) sel.value=prev;
+  const bsel=document.getElementById("bulkFabric"); const bprev=bsel.value;
+  bsel.innerHTML=opts; if(bprev) bsel.value=bprev;
+}
+function fillColors(){
+  const opts=allColors().map(c=>`<option>${c[0]}</option>`).join("");
+  const sel=document.getElementById("colorSel"); const prev=sel.value;
+  sel.innerHTML=opts; if(prev) sel.value=prev;
+  const bsel=document.getElementById("bulkColorSel"); const bprev=bsel.value;
+  bsel.innerHTML=opts; if(bprev) bsel.value=bprev;
+}
+/* ---- Bulk selection (select-only, no typing) ---- */
+let bulkSelected = [];
+function renderBulkChips(){
+  const box=document.getElementById("bulkChips");
+  if(!bulkSelected.length){box.style.display="none";box.innerHTML="";updateBulkPreview();return}
+  box.style.display="flex";
+  box.innerHTML = bulkSelected.map(c=>
+    `<span class="sel-chip"><span class="swatch" style="background:${colorHex(c)}"></span>${c}<span class="x" onclick="removeBulkColor('${c}')" title="Remove">✕</span></span>`
+  ).join("") + `<span class="clear-chips" onclick="clearBulkColors()">Clear all</span>`;
+  updateBulkPreview();
+}
+function addToBulkSelected(name){
+  if(bulkSelected.includes(name)){toast(name+" pehle se selected hai");return}
+  bulkSelected.push(name); renderBulkChips();
+}
+function removeBulkColor(name){
+  bulkSelected=bulkSelected.filter(c=>c!==name); renderBulkChips();
+}
+function clearBulkColors(){ bulkSelected=[]; renderBulkChips(); }
+function bulkInsertColor(){
+  addToBulkSelected(document.getElementById("bulkColorSel").value);
+}
+function bulkMixAdd(){
+  const res=addColorCore(document.getElementById("bulkMixName").value, document.getElementById("bulkMixHex").value);
+  if(res){ addToBulkSelected(res); document.getElementById("bulkMixName").value=""; document.getElementById("bulkMixGuess").style.display="none"; }
+}
+/* Core: naya colour list me add karo (CAPS, no gaps, unique abbr) — return true on success */
+function addColorCore(name,hex){
+  name=(name||"").toUpperCase().replace(/[^A-Z]/g,"");
+  if(!name){toast("Colour ka naam likho");return false}
+  if(name.length<3){toast("Colour name kam se kam 3 letters ka ho");return false}
+  if(allColors().some(c=>c[0]===name)){toast("Ye colour pehle se list me hai");return name} /* already there = usable */
+  let ab=abbr(name,true);
+  const usedAbbr=new Set(allColors().map(c=>abbr(c[0],true)));
+  if(usedAbbr.has(ab)){
+    let found=false;
+    for(let i=1;i<name.length-1 && !found;i++){
+      for(let j=i+1;j<name.length && !found;j++){
+        const alt=(name[0]+name[i]+name[j]).toUpperCase();
+        if(!usedAbbr.has(alt)){ COLOR_ABBR[name]=alt; found=true; }
+      }
+    }
+    if(!found){toast("Is naam se unique code nahi ban raha — thoda alag naam try karo");return false}
+    store.set("rz_color_abbr", JSON.stringify(COLOR_ABBR));
+  }
+  customColors.push([name,hex]); save(); fillColors(); fillDetailSelects();
+  toast("Colour added: "+name);
+  return name;
+}
+function addColor(){
+  const inp=document.getElementById("newColor");
+  const res=addColorCore(inp.value, document.getElementById("newColorHex").value);
+  if(res){ document.getElementById("colorSel").value=res; inp.value=""; }
+}
+function colorHex(name){
+  const f=allColors().find(c=>c[0]===name); return f?f[1]:"#CCC";
+}
+function addFabric(){
+  const inp=document.getElementById("newFabric");
+  const name=inp.value.trim().replace(/\s+/g," ");
+  if(!name){toast("Fabric ka naam likho");return}
+  const proper=name.toUpperCase();
+  if(fabrics.some(f=>f.toLowerCase()===proper.toLowerCase())){toast("Ye fabric pehle se list me hai");return}
+  fabrics.push(proper); save(); fillFabrics();
+  document.getElementById("fabricSel").value=proper;
+  inp.value=""; toast("Fabric added: "+proper);
+}
+
+/* ============ CODE GENERATION ============ */
+function cleanFCode(v){ return (v||"").toUpperCase().replace(/[^A-Z0-9]/g,""); }
+function generateCode(){
+  const fcode=cleanFCode(document.getElementById("fabricCode").value);
+  const fabric=document.getElementById("fabricSel").value;
+  const color=document.getElementById("colorSel").value;
+  if(!fcode){toast("Pehle fabric code likho (e.g. F101)");return}
+  if(!fabric||!color){toast("Fabric aur colour dono select karo");return}
+
+  const code=`${fcode}-${fabric}-${color}`;
+  /* Duplicate gate — same code+fabric+colour ⇒ wahi entry */
+  const existing = registry.find(r=>r.code===code);
+  if(existing){ showResult(existing,true); toast("Ye combination pehle se registered hai"); return }
+
+  const entry={code,fcode,fabric,color,date:new Date().toISOString(),by:USER};
+  registry.unshift(entry); save();
+  showResult(entry,false); renderRegistry();
+  toast("Code generated ✓");
+}
+function showResult(entry,isDup){
+  lastCode=entry.code; lastEntry=entry;
+  document.getElementById("resultBox").style.display="block";
+  document.getElementById("resFabricColor").textContent=entry.fabric+" · "+entry.color;
+  document.getElementById("resCode").textContent=entry.code;
+  renderBarcode(document.getElementById("resBarcode"), entry.code);
+  document.getElementById("resMeta").textContent="Created "+fmtDate(entry.date)+" by "+entry.by;
+  const tag=document.getElementById("resTag");
+  tag.textContent=isDup?"Already Exists":"New Code";
+  tag.className="tag "+(isDup?"tag-dup":"tag-new");
+}
+
+/* ============ REGISTRY ============ */
+function renderRegistry(){
+  const q=(document.getElementById("searchInput").value||"").toLowerCase();
+  const rows=registry.filter(r=>
+    !q || r.code.toLowerCase().includes(q)||r.fabric.toLowerCase().includes(q)||r.color.toLowerCase().includes(q)
+  );
+  document.getElementById("countPill").textContent=registry.length+" code"+(registry.length!==1?"s":"");
+  const body=document.getElementById("registryBody");
+  document.getElementById("emptyState").style.display = registry.length? "none":"block";
+  body.innerHTML=rows.map((r,i)=>`
+    <tr>
+      <td class="code-cell">${r.code}</td>
+      <td>${r.fabric}</td>
+      <td><span class="swatch" style="background:${colorHex(r.color)}"></span>${r.color}</td>
+      <td style="color:var(--soft)">${fmtDate(r.date)}</td>
+      <td style="color:var(--soft)">${r.by}</td>
+      <td>
+        <div class="row-actions">
+          <button class="icon-btn" title="Copy" onclick="copyText('${r.code}')">⧉</button>
+          <button class="icon-btn" title="Print A5 label" onclick='printLabel(${JSON.stringify(r).replace(/'/g,"&#39;")})'>🖨</button>
+          <button class="icon-btn danger" title="Delete" onclick="delEntry('${r.code}')">✕</button>
+        </div>
+      </td>
+    </tr>`).join("");
+  if(rows.length===0 && registry.length>0){
+    body.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--soft);padding:30px">Koi match nahi mila — search change karke dekho.</td></tr>`;
+  }
+}
+function delEntry(code){
+  if(!confirm("Delete code "+code+" ? Ye registry se hat jayega.")) return;
+  registry=registry.filter(r=>r.code!==code); save(); renderRegistry(); toast("Deleted "+code);
+}
+
+/* ============ EXPORT CSV ============ */
+function exportCSV(){
+  if(!registry.length){toast("Registry khaali hai");return}
+  const head="Code,Fabric,Colour,Date Created,Created By\n";
+  const body=registry.map(r=>[r.code,r.fabric,r.color,fmtDate(r.date),r.by].map(v=>`"${v}"`).join(",")).join("\n");
+  const blob=new Blob(["\uFEFF"+head+body],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="RIZABELLA_Fabric_Codes_"+new Date().toISOString().slice(0,10)+".csv";
+  a.click(); URL.revokeObjectURL(a.href);
+  toast("CSV downloaded ✓");
+}
+
+/* ============ BARCODE ============ */
+function renderBarcode(svgEl, text, opts){
+  if(!window.JsBarcode){ if(svgEl) svgEl.outerHTML="<div style='font-size:11px;color:#B0564E'>Barcode ke liye internet chahiye (pehli baar load pe)</div>"; return false }
+  JsBarcode(svgEl, text, Object.assign({format:"CODE128",displayValue:false,margin:0,height:70,width:2,lineColor:"#2B2A28",background:"transparent"},opts||{}));
+  return true;
+}
+
+/* ============ A5 STICKER PRINT (single + bulk, 1 sticker = 1 poora page) ============ */
+function buildAndPrint(pages){
+  if(!pages.length){toast("Print ke liye kuch nahi hai");return}
+  if(pages.length>300 && !confirm(pages.length+" pages print honge — continue?")) return;
+  const area=document.getElementById("printArea");
+  area.innerHTML=pages.map((p,i)=>`
+    <div class="pl-page"><div class="pl-frame">
+      <div class="pl-brand">RIZABELLA</div>
+      <div class="pl-rule"></div>
+      <div class="pl-code">${p.code}</div>
+      <div class="pl-barcode"><svg id="bc_${i}"></svg></div>
+      <div class="pl-meta">${p.fabric} &nbsp;·&nbsp; ${p.color}</div>
+      ${p.meters?`<div class="pl-meta" style="font-size:16pt;font-weight:600;letter-spacing:.18em;color:#2B2A28">${p.meters} MTR</div>`:""}
+      <div class="pl-date">${fmtDate(p.date)} · MADE BY ${FULL_NAME}</div>
+    </div></div>`).join("");
+  pages.forEach((p,i)=>renderBarcode(document.getElementById("bc_"+i), p.code, {height:120,width:3}));
+  setTimeout(()=>window.print(), 150);
+}
+function printLabel(entry){
+  if(!entry){toast("Pehle code generate karo");return}
+  buildAndPrint([entry]);
+}
+
+/* ============ BULK SYSTEM ============ */
+function ensureCode(fabric,color,fcode){
+  const code=`${fcode}-${fabric}-${color}`;
+  const existing=registry.find(r=>r.code===code);
+  if(existing) return {entry:existing,isNew:false};
+  const entry={code,fcode,fabric,color,date:new Date().toISOString(),by:USER};
+  registry.unshift(entry);
+  return {entry,isNew:true};
+}
+function parseBulk(){
+  const fcode=cleanFCode(document.getElementById("bulkFabricCode").value);
+  const fabric=document.getElementById("bulkFabric").value;
+  const copies=Math.max(1, parseInt(document.getElementById("bulkCopies").value)||1);
+  /* Select-only system — sab colours list se hi aate hain, invalid possible hi nahi */
+  return {fcode,fabric,copies,valid:[...bulkSelected],invalid:[]};
+}
+function updateBulkPreview(){
+  const {fcode,fabric,copies,valid,invalid}=parseBulk();
+  const box=document.getElementById("bulkPreview");
+  if(!valid.length && !invalid.length){box.style.display="none";return}
+  box.style.display="block";
+  let html=`<b>${valid.length} unique barcode${valid.length!==1?"s":""} · ${valid.length*copies} total A5 page${valid.length*copies!==1?"s":""}</b> banenge:`;
+  html+=`<div class="chips">`;
+  const fc=fcode||"CODE";
+  html+=valid.map(c=>{
+    const code=`${fc}-${fabric}-${c}`;
+    const exists=registry.some(r=>r.code===code);
+    return `<span class="chip${exists?" exists":""}">${code} ×${copies}</span>`;
+  }).join("");
+  if(!fcode) html+=`</div><div style="margin-top:10px;font-size:12px;color:var(--danger)">Fabric code likhna zaroori hai — upar box me daalo.</div><div class="chips" style="display:none">`;
+  html+=`</div>`;
+  box.innerHTML=html;
+}
+function bulkAdd(){
+  const {fcode,fabric,valid,invalid}=parseBulk();
+  if(!fcode){toast("Pehle fabric code likho (e.g. F101)");return}
+  if(!valid.length){toast("Pehle dropdown se colours select karo");return}
+  let added=0;
+  valid.forEach(c=>{ if(ensureCode(fabric,c,fcode).isNew) added++ });
+  save(); renderRegistry(); updateBulkPreview();
+  toast(added?added+" naye codes registry me add ho gaye ✓":"Sab codes pehle se registry me hain");
+}
+function bulkPrint(){
+  const {fcode,fabric,copies,valid,invalid}=parseBulk();
+  if(!fcode){toast("Pehle fabric code likho (e.g. F101)");return}
+  if(!valid.length){toast("Pehle dropdown se colours select karo");return}
+  const pages=[];
+  valid.forEach(c=>{
+    const {entry}=ensureCode(fabric,c,fcode);
+    for(let k=0;k<copies;k++) pages.push(entry);
+  });
+  save(); renderRegistry(); updateBulkPreview();
+  buildAndPrint(pages);
+}
+
+
+/* ============ DETAILS-WISE BULK ============ */
+let detailRows=[];
+function fillDetailSelects(){
+  const fsel=document.getElementById("dFabric"); const fprev=fsel.value;
+  fsel.innerHTML=fabrics.sort((a,b)=>a.localeCompare(b)).map(f=>`<option>${f}</option>`).join("");
+  if(fprev) fsel.value=fprev;
+  const csel=document.getElementById("dColor"); const cprev=csel.value;
+  csel.innerHTML=allColors().map(c=>`<option>${c[0]}</option>`).join("");
+  if(cprev) csel.value=cprev;
+}
+function renderDetailRows(){
+  const wrap=document.getElementById("dRowsWrap");
+  if(!detailRows.length){wrap.style.display="none";return}
+  wrap.style.display="block";
+  document.getElementById("dRowsBody").innerHTML=detailRows.map((r,i)=>`
+    <tr>
+      <td style="color:var(--soft)">${i+1}</td>
+      <td class="code-cell">${r.fcode}-${r.fabric}-${r.color}</td>
+      <td>${r.fabric}</td>
+      <td><span class="swatch" style="background:${colorHex(r.color)}"></span>${r.color}</td>
+      <td class="mtr-cell">${r.meters||"—"}</td>
+      <td>${r.copies}</td>
+      <td><div class="row-actions"><button class="icon-btn danger" onclick="detailDelete(${i})">✕</button></div></td>
+    </tr>`).join("");
+  const total=detailRows.reduce((a,r)=>a+r.copies,0);
+  document.getElementById("dCountPill").textContent=detailRows.length+" rows · "+total+" A5 pages";
+}
+function detailAddRow(){
+  const fcode=cleanFCode(document.getElementById("dFcode").value);
+  const fabric=document.getElementById("dFabric").value;
+  const color=document.getElementById("dColor").value;
+  const meters=(document.getElementById("dMeters").value||"").trim();
+  const copies=Math.max(1, parseInt(document.getElementById("dCopies").value)||1);
+  if(!fcode){toast("Fabric code likho (e.g. RZ2)");return}
+  if(!fabric||!color){toast("Fabric aur colour select karo");return}
+  if(detailRows.some(r=>r.fcode===fcode&&r.fabric===fabric&&r.color===color)){toast("Ye row pehle se list me hai");return}
+  detailRows.push({fcode,fabric,color,meters,copies});
+  document.getElementById("dFcode").value=""; document.getElementById("dMeters").value="";
+  renderDetailRows(); toast("Row added ✓");
+}
+function detailDelete(i){ detailRows.splice(i,1); renderDetailRows(); }
+function detailClear(){ detailRows=[]; renderDetailRows(); }
+function detailParsePaste(){
+  const raw=document.getElementById("dPaste").value.trim();
+  const errBox=document.getElementById("dPasteErrors");
+  errBox.style.display="none"; errBox.innerHTML="";
+  if(!raw){toast("Pehle sheet se rows paste karo");return}
+  const validColors=new Set(allColors().map(c=>c[0]));
+  const errors=[]; let added=0, newFabrics=0;
+  raw.split(/\n+/).forEach((line,idx)=>{
+    const cols=line.split(/\t|,|\s{2,}/).map(c=>c.trim()).filter(Boolean);
+    if(cols.length<3){ if(line.trim()) errors.push("Line "+(idx+1)+": kam se kam Code, Fabric, Colour chahiye"); return }
+    const fcode=cleanFCode(cols[0]);
+    const fabric=cols[1].toUpperCase().trim();
+    const color=cols[2].toUpperCase().replace(/\s+/g,"");
+    const meters=(cols[3]||"").trim();
+    if(!fcode){errors.push("Line "+(idx+1)+": fabric code invalid");return}
+    if(!validColors.has(color)){errors.push("Line "+(idx+1)+": colour \""+color+"\" canonical list me nahi hai — pehle mixer se add karo");return}
+    if(!fabrics.includes(fabric)){ fabrics.push(fabric); newFabrics++; }
+    if(detailRows.some(r=>r.fcode===fcode&&r.fabric===fabric&&r.color===color)) return; /* duplicate skip */
+    detailRows.push({fcode,fabric,color,meters,copies:1});
+    added++;
+  });
+  if(newFabrics){ save(); fillFabrics(); fillDetailSelects(); }
+  renderDetailRows();
+  if(errors.length){ errBox.style.display="block"; errBox.innerHTML="<b>"+errors.length+" line(s) skip hui:</b><br>"+errors.join("<br>"); }
+  toast(added+" rows ban gayi"+(newFabrics?" · "+newFabrics+" naye fabric add hue":""));
+  if(added) document.getElementById("dPaste").value="";
+}
+function detailAdd(){
+  if(!detailRows.length){toast("Pehle rows banao");return}
+  let added=0;
+  detailRows.forEach(r=>{ if(ensureCode(r.fabric,r.color,r.fcode).isNew) added++ });
+  save(); renderRegistry();
+  toast(added?added+" naye codes registry me add ho gaye ✓":"Sab codes pehle se registry me hain");
+}
+function detailPrint(){
+  if(!detailRows.length){toast("Pehle rows banao");return}
+  const pages=[];
+  detailRows.forEach(r=>{
+    const {entry}=ensureCode(r.fabric,r.color,r.fcode);
+    for(let k=0;k<r.copies;k++) pages.push({...entry, meters:r.meters});
+  });
+  save(); renderRegistry();
+  buildAndPrint(pages);
+}
+
+/* ============ INIT ============ */
+Object.assign(COLOR_ABBR, JSON.parse(store.get("rz_color_abbr")||"{}"));
+fillFabrics(); fillColors(); fillDetailSelects(); renderRegistry();
+document.getElementById("newFabric").addEventListener("keydown",e=>{if(e.key==="Enter")addFabric()});
+document.getElementById("newColor").addEventListener("keydown",e=>{if(e.key==="Enter")addColor()});
+
+/* Palette se pick karte hi colour ka naam auto-detect */
+function detectColorName(){
+  const hex=document.getElementById("newColorHex").value;
+  const {name,exact,inList}=nearestColorName(hex);
+  document.getElementById("newColor").value=name;
+  const g=document.getElementById("colorGuess");
+  g.style.display="block";
+  const swatch=`<span class="swatch" style="background:${hex}"></span>`;
+  if(inList && exact){
+    g.innerHTML=`${swatch}<b>${name}</b> — ye colour list me pehle se hai (${hex.toUpperCase()}), dropdown se select karo`;
+    document.getElementById("colorSel").value=name;
+  } else if(inList){
+    g.innerHTML=`${swatch}Sabse najdeeki: <b>${name}</b> (list me hai) · ${hex.toUpperCase()} — naya shade add karna ho toh naam change karke Add dabao`;
+  } else {
+    g.innerHTML=`${swatch}Detected: <b>${name}</b> · ${hex.toUpperCase()} — naam theek hai toh seedha <b>+ Add</b> dabao`;
+  }
+}
+document.getElementById("newColorHex").addEventListener("input",detectColorName);
+document.getElementById("newColorHex").addEventListener("change",detectColorName);
+
+/* Bulk mixer — palette pick pe naam auto-detect */
+function detectBulkMixName(){
+  const hex=document.getElementById("bulkMixHex").value;
+  const {name,exact,inList}=nearestColorName(hex);
+  document.getElementById("bulkMixName").value=name;
+  const g=document.getElementById("bulkMixGuess");
+  g.style.display="block";
+  const swatch=`<span class="swatch" style="background:${hex}"></span>`;
+  if(inList && exact){
+    g.innerHTML=`${swatch}<b>${name}</b> — list me pehle se hai (${hex.toUpperCase()}) · "+ Add & Insert" dabao, seedha textarea me chala jayega`;
+  } else if(inList){
+    g.innerHTML=`${swatch}Sabse najdeeki: <b>${name}</b> (list me hai) · ${hex.toUpperCase()} — naya shade chahiye toh naam badal ke Add karo`;
+  } else {
+    g.innerHTML=`${swatch}Detected: <b>${name}</b> · ${hex.toUpperCase()} — naam theek hai toh <b>+ Add & Insert</b> dabao`;
+  }
+}
+document.getElementById("bulkMixHex").addEventListener("input",detectBulkMixName);
+document.getElementById("bulkMixHex").addEventListener("change",detectBulkMixName);
+document.getElementById("bulkMixName").addEventListener("keydown",e=>{if(e.key==="Enter")bulkMixAdd()});
+</script>
+</body>
+</html>
