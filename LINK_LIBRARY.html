@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marginalia — Link Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&family=Newsreader:ital,opsz,wght@0,6..72,300..500;1,6..72,300..400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f3edf4;
+    --paper-deep:#e7dcea;
+    --ink:#2c2340;
+    --ink-soft:#6f6484;
+    --rule:#d8cbe0;
+    --accent:#7a4bb0;
+    --accent-bright:#b6567f;
+    --gilt:#c08a5e;
+    --card:#faf6fb;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Newsreader',Georgia,serif;
+    font-size:18px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(var(--rule) 0.5px,transparent 0.5px);
+    background-size:22px 22px;
+    min-height:100vh;
+  }
+  ::selection{background:var(--accent);color:var(--paper)}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 28px 120px}
+
+  /* Masthead */
+  header{
+    border-bottom:3px double var(--ink);
+    padding:56px 0 20px;
+    margin-bottom:8px;
+    text-align:center;
+  }
+  .byline{
+    font-family:'Fraunces',serif;
+    font-style:italic;
+    font-weight:400;
+    font-size:22px;
+    letter-spacing:.02em;
+    color:var(--accent);
+    margin-bottom:14px;
+  }
+  .byline::before,.byline::after{content:'·';color:var(--gilt);margin:0 12px}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.42em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:18px;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-optical-sizing:144;
+    font-weight:400;
+    font-size:clamp(44px,8vw,88px);
+    line-height:.92;
+    letter-spacing:-.02em;
+    font-style:italic;
+  }
+  .sub{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.3em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-top:18px;
+    display:flex;
+    justify-content:center;
+    gap:18px;
+    flex-wrap:wrap;
+  }
+  .sub b{color:var(--accent);font-weight:500}
+
+  /* Composer */
+  .composer{
+    background:var(--card);
+    border:1px solid var(--rule);
+    padding:26px;
+    margin:38px 0 30px;
+    box-shadow:6px 6px 0 var(--paper-deep);
+  }
+  .composer .row{display:flex;gap:14px;flex-wrap:wrap}
+  .field{flex:1;min-width:180px;display:flex;flex-direction:column;gap:6px}
+  label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+  input[type=text],input[type=url]{
+    background:transparent;
+    border:none;
+    border-bottom:1.5px solid var(--rule);
+    padding:8px 2px;
+    font-family:'Newsreader',serif;
+    font-size:19px;
+    color:var(--ink);
+    transition:border-color .2s;
+  }
+  input:focus{outline:none;border-bottom-color:var(--accent)}
+  input::placeholder{color:#b3a992;font-style:italic}
+  .composer .actions{margin-top:20px;display:flex;justify-content:flex-end}
+  button.save{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    padding:12px 28px;
+    cursor:pointer;
+    transition:background .2s,transform .1s;
+  }
+  button.save:hover{background:var(--accent)}
+  button.save:active{transform:translateY(1px)}
+
+  /* Toolbar */
+  .toolbar{
+    display:flex;
+    gap:16px;
+    align-items:center;
+    flex-wrap:wrap;
+    padding:16px 0;
+    border-top:1px solid var(--rule);
+    border-bottom:1px solid var(--rule);
+    margin-bottom:6px;
+  }
+  .search{flex:1;min-width:200px;display:flex;align-items:center;gap:10px}
+  .search input{flex:1;font-size:17px}
+  .search .ic{font-family:'Fraunces',serif;font-style:italic;color:var(--ink-soft)}
+  .tagbar{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    padding:5px 12px;
+    border:1px solid var(--rule);
+    background:transparent;
+    color:var(--ink-soft);
+    cursor:pointer;
+    border-radius:40px;
+    transition:all .18s;
+  }
+  .chip:hover{border-color:var(--accent);color:var(--accent)}
+  .chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+  /* List */
+  .count{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    padding:20px 0 4px;
+  }
+  .entry{
+    display:grid;
+    grid-template-columns:44px 1fr auto;
+    gap:20px;
+    align-items:baseline;
+    padding:22px 4px;
+    border-bottom:1px solid var(--rule);
+    transition:background .2s;
+  }
+  .entry:hover{background:var(--card)}
+  .idx{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--gilt);
+    padding-top:6px;
+  }
+  .main .title{
+    font-family:'Fraunces',serif;
+    font-weight:400;
+    font-size:26px;
+    line-height:1.15;
+    letter-spacing:-.01em;
+    text-decoration:none;
+    color:var(--ink);
+    display:inline;
+    background-image:linear-gradient(var(--accent),var(--accent));
+    background-size:0% 1.5px;
+    background-position:0 100%;
+    background-repeat:no-repeat;
+    transition:background-size .3s,color .2s;
+  }
+  .main .title:hover{color:var(--accent);background-size:100% 1.5px}
+  .main .url{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin-top:6px;
+    word-break:break-all;
+  }
+  .main .tags{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap}
+  .main .tags span{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--accent);
+    border-bottom:1px dotted var(--accent);
+    padding-bottom:1px;
+  }
+  .side{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+  .side .date{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    color:var(--ink-soft);
+    letter-spacing:.1em;
+    white-space:nowrap;
+  }
+  .del{
+    background:none;border:none;cursor:pointer;
+    font-family:'Fraunces',serif;font-style:italic;
+    font-size:15px;color:var(--ink-soft);
+    transition:color .2s;
+  }
+  .del:hover{color:var(--accent-bright)}
+
+  .empty{
+    text-align:center;
+    padding:80px 20px;
+    color:var(--ink-soft);
+  }
+  .empty .glyph{font-family:'Fraunces',serif;font-style:italic;font-size:64px;color:var(--rule);line-height:1}
+  .empty p{font-style:italic;margin-top:16px;font-size:20px}
+
+  footer{
+    text-align:center;
+    padding-top:40px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+  @media(max-width:600px){
+    .entry{grid-template-columns:1fr;gap:6px}
+    .idx{display:none}
+    .side{flex-direction:row;align-items:center;gap:16px;margin-top:6px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="byline">A Personal Register of Links</div>
+    <div class="eyebrow">Marginalia</div>
+    <h1>Ajita Sahgal</h1>
+    <div class="sub">
+      <span>Kept · <b id="total">0</b> entries</span>
+      <span>Saved across sessions</span>
+    </div>
+  </header>
+
+  <section class="composer">
+    <div class="row">
+      <div class="field" style="flex:2">
+        <label for="f-title">Title</label>
+        <input type="text" id="f-title" placeholder="What is it?">
+      </div>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <div class="field" style="flex:3">
+        <label for="f-url">Link</label>
+        <input type="url" id="f-url" placeholder="https://…">
+      </div>
+      <div class="field" style="flex:2">
+        <label for="f-tags">Tags — comma separated</label>
+        <input type="text" id="f-tags" placeholder="reading, design, later">
+      </div>
+    </div>
+    <div class="actions">
+      <button class="save" id="save-btn">Save to library ↵</button>
+    </div>
+  </section>
+
+  <div class="toolbar">
+    <div class="search">
+      <span class="ic">⌕</span>
+      <input type="text" id="search" placeholder="Search titles, links, tags…">
+    </div>
+    <div class="tagbar" id="tagbar"></div>
+  </div>
+
+  <div class="count" id="count"></div>
+  <div id="list"></div>
+
+  <footer>Marginalia · Your links, quietly archived</footer>
+</div>
+
+<script>
+const KEY='marginalia:entries';
+let entries=[];
+let activeTag=null;
+let query='';
+
+async function load(){
+  try{
+    const r=await window.storage.get(KEY);
+    entries=r&&r.value?JSON.parse(r.value):[];
+  }catch(e){entries=[];}
+  render();
+}
+async function persist(){
+  try{await window.storage.set(KEY,JSON.stringify(entries));}
+  catch(e){console.error('Save failed',e);}
+}
+
+function fmtDate(ts){
+  const d=new Date(ts);
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'}).toUpperCase();
+}
+function normHost(u){
+  try{return new URL(u).hostname.replace(/^www\./,'');}catch(e){return u;}
+}
+function normUrl(u){
+  if(!u)return '';
+  return /^https?:\/\//i.test(u)?u:'https://'+u;
+}
+
+async function add(){
+  const t=document.getElementById('f-title');
+  const u=document.getElementById('f-url');
+  const g=document.getElementById('f-tags');
+  const url=normUrl(u.value.trim());
+  if(!url){u.focus();return;}
+  const title=t.value.trim()||normHost(url);
+  const tags=g.value.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
+  entries.unshift({id:Date.now(),title,url,tags,ts:Date.now()});
+  t.value=u.value=g.value='';
+  t.focus();
+  await persist();
+  render();
+}
+
+async function del(id){
+  entries=entries.filter(e=>e.id!==id);
+  await persist();
+  render();
+}
+
+function allTags(){
+  const m={};
+  entries.forEach(e=>e.tags.forEach(t=>m[t]=(m[t]||0)+1));
+  return Object.keys(m).sort((a,b)=>m[b]-m[a]);
+}
+
+function filtered(){
+  return entries.filter(e=>{
+    if(activeTag&&!e.tags.includes(activeTag))return false;
+    if(query){
+      const hay=(e.title+' '+e.url+' '+e.tags.join(' ')).toLowerCase();
+      if(!hay.includes(query))return false;
+    }
+    return true;
+  });
+}
+
+function render(){
+  document.getElementById('total').textContent=entries.length;
+
+  const tb=document.getElementById('tagbar');
+  tb.innerHTML='';
+  const tags=allTags();
+  if(tags.length){
+    const all=document.createElement('button');
+    all.className='chip'+(activeTag===null?' on':'');
+    all.textContent='All';
+    all.onclick=()=>{activeTag=null;render();};
+    tb.appendChild(all);
+    tags.forEach(t=>{
+      const c=document.createElement('button');
+      c.className='chip'+(activeTag===t?' on':'');
+      c.textContent=t;
+      c.onclick=()=>{activeTag=activeTag===t?null:t;render();};
+      tb.appendChild(c);
+    });
+  }
+
+  const rows=filtered();
+  const cnt=document.getElementById('count');
+  const list=document.getElementById('list');
+
+  if(entries.length===0){
+    cnt.textContent='';
+    list.innerHTML='<div class="empty"><div class="glyph">❦</div><p>Nothing shelved yet. Add your first link above.</p></div>';
+    return;
+  }
+  cnt.textContent=rows.length+' of '+entries.length+' shown'+(activeTag?' · #'+activeTag:'');
+  if(rows.length===0){
+    list.innerHTML='<div class="empty"><div class="glyph">∅</div><p>No links match that search.</p></div>';
+    return;
+  }
+
+  list.innerHTML='';
+  rows.forEach((e,i)=>{
+    const row=document.createElement('div');
+    row.className='entry';
+    const n=String(i+1).padStart(2,'0');
+    row.innerHTML=`
+      <div class="idx">${n}</div>
+      <div class="main">
+        <a class="title" href="${e.url}" target="_blank" rel="noopener">${escapeHtml(e.title)}</a>
+        <div class="url">${escapeHtml(normHost(e.url))}</div>
+        <div class="tags">${e.tags.map(t=>'<span>#'+escapeHtml(t)+'</span>').join('')}</div>
+      </div>
+      <div class="side">
+        <span class="date">${fmtDate(e.ts)}</span>
+        <button class="del" title="Remove">remove</button>
+      </div>`;
+    row.querySelector('.del').onclick=()=>del(e.id);
+    list.appendChild(row);
+  });
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+document.getElementById('save-btn').onclick=add;
+['f-title','f-url','f-tags'].forEach(id=>{
+  document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')add();});
+});
+document.getElementById('search').addEventListener('input',e=>{query=e.target.value.toLowerCase().trim();render();});
+
+load();
+</script>
+</body>
+</html>
