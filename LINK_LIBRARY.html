@@ -310,15 +310,15 @@ let entries=[];
 let activeTag=null;
 let query='';
 
-async function load(){
+function load(){
   try{
-    const r=await window.storage.get(KEY);
-    entries=r&&r.value?JSON.parse(r.value):[];
+    const r=localStorage.getItem(KEY);
+    entries=r?JSON.parse(r):[];
   }catch(e){entries=[];}
   render();
 }
-async function persist(){
-  try{await window.storage.set(KEY,JSON.stringify(entries));}
+function persist(){
+  try{localStorage.setItem(KEY,JSON.stringify(entries));}
   catch(e){console.error('Save failed',e);}
 }
 
@@ -334,7 +334,7 @@ function normUrl(u){
   return /^https?:\/\//i.test(u)?u:'https://'+u;
 }
 
-async function add(){
+function add(){
   const t=document.getElementById('f-title');
   const u=document.getElementById('f-url');
   const g=document.getElementById('f-tags');
@@ -345,13 +345,13 @@ async function add(){
   entries.unshift({id:Date.now(),title,url,tags,ts:Date.now()});
   t.value=u.value=g.value='';
   t.focus();
-  await persist();
+  persist();
   render();
 }
 
-async function del(id){
+function del(id){
   entries=entries.filter(e=>e.id!==id);
-  await persist();
+  persist();
   render();
 }
 
